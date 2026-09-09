@@ -1,6 +1,7 @@
 package cn.edu.cqut.advisorplatform.riskcontrol.service.filter;
 
 import cn.edu.cqut.advisorplatform.riskcontrol.dao.UserBanDao;
+import cn.edu.cqut.advisorplatform.riskcontrol.dto.RiskCheckDetail;
 import cn.edu.cqut.advisorplatform.riskcontrol.dto.RiskCheckRequest;
 import cn.edu.cqut.advisorplatform.riskcontrol.dto.RiskCheckResponse;
 import java.time.LocalDateTime;
@@ -51,6 +52,19 @@ public class BlacklistFilter implements RiskFilter {
   }
 
   private RiskCheckResponse passed() {
-    return RiskCheckResponse.builder().passed(true).build();
+    return RiskCheckResponse.builder()
+        .passed(true)
+        .checks(
+            java.util.List.of(
+                RiskCheckDetail.builder()
+                    .name(getName())
+                    .displayName("黑名单检查")
+                    .order(10)
+                    .executed(true)
+                    .passed(true)
+                    .matchingMethod("ACCOUNT_STATUS")
+                    .details("查询当前账号是否存在有效封禁记录")
+                    .build()))
+        .build();
   }
 }

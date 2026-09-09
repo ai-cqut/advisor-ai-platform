@@ -1,6 +1,7 @@
 package cn.edu.cqut.advisorplatform.riskcontrol.service.filter;
 
 import cn.edu.cqut.advisorplatform.riskcontrol.dao.RiskRuleDao;
+import cn.edu.cqut.advisorplatform.riskcontrol.dto.RiskCheckDetail;
 import cn.edu.cqut.advisorplatform.riskcontrol.dto.RiskCheckRequest;
 import cn.edu.cqut.advisorplatform.riskcontrol.dto.RiskCheckResponse;
 import cn.edu.cqut.advisorplatform.riskcontrol.entity.RiskRule;
@@ -30,7 +31,7 @@ public class BusinessComplianceFilter implements RiskFilter {
   public RiskCheckResponse check(RiskCheckRequest request) {
     String content = request.getContent();
     if (content == null || content.isBlank()) {
-      return passed();
+      return passed(0);
     }
 
     List<RiskRule> rules =
@@ -53,16 +54,45 @@ public class BusinessComplianceFilter implements RiskFilter {
               .matchedKeyword(rule.getName())
               .statusCode(400)
               .message("您的问题超出服务范围，请咨询相关专业人士")
+              .checks(
+                  java.util.List.of(
+                      RiskCheckDetail.builder()
+                          .name(getName())
+                          .displayName("业务合规")
+                          .order(50)
+                          .executed(true)
+                          .passed(false)
+                          .matchingMethod("REGEX")
+                          .ruleCount(rules.size())
+                          .matched(true)
+                          .matchedRule(rule.getName())
+                          .reason("业务合规限制")
+                          .details("正则规则命中")
+                          .build()))
               .build();
         }
       } catch (Exception e) {
         log.error("Invalid regex pattern in rule {}: {}", rule.getName(), rule.getPattern(), e);
       }
     }
-    return passed();
+    return passed(rules.size());
   }
 
-  private RiskCheckResponse passed() {
-    return RiskCheckResponse.builder().passed(true).build();
+  private RiskCheckResponse passed(int ruleCount) {
+    return RiskCheckResponse.builder()
+        .passed(true)
+        .checks(
+            java.util.List.of(
+                RiskCheckDetail.builder()
+                    .name(getName())
+                    .displayName("业务合规")
+                    .order(50)
+                    .executed(true)
+                    .passed(true)
+                    .matchingMethod("REGEX")
+                    .ruleCount(ruleCount)
+                    .details("已检查启用规则，未命中")
+                    .build()))
+        .build();
   }
 }

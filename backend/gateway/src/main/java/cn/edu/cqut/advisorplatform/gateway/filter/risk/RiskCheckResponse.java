@@ -1,5 +1,7 @@
 package cn.edu.cqut.advisorplatform.gateway.filter.risk;
 
+import java.util.List;
+
 public class RiskCheckResponse {
   private boolean passed;
   private String action;
@@ -7,6 +9,7 @@ public class RiskCheckResponse {
   private String category;
   private Integer statusCode;
   private String message;
+  private List<Object> checks;
 
   public static RiskCheckResponse passed() {
     RiskCheckResponse response = new RiskCheckResponse();
@@ -61,5 +64,13 @@ public class RiskCheckResponse {
 
   public void setMessage(String message) {
     this.message = message;
+  }
+
+  public List<Object> getChecks() {
+    return checks;
+  }
+
+  public void setChecks(List<Object> checks) {
+    this.checks = checks;
   }
 }

@@ -1,6 +1,7 @@
 package cn.edu.cqut.advisorplatform.riskcontrol.service.filter;
 
 import cn.edu.cqut.advisorplatform.riskcontrol.dao.RateLimitDao;
+import cn.edu.cqut.advisorplatform.riskcontrol.dto.RiskCheckDetail;
 import cn.edu.cqut.advisorplatform.riskcontrol.dto.RiskCheckRequest;
 import cn.edu.cqut.advisorplatform.riskcontrol.dto.RiskCheckResponse;
 import java.time.Duration;
@@ -46,6 +47,20 @@ public class RateLimitFilter implements RiskFilter {
           .category("rate_limit")
           .statusCode(429)
           .message("请求过于频繁，请稍后再试")
+          .checks(
+              java.util.List.of(
+                  RiskCheckDetail.builder()
+                      .name(getName())
+                      .displayName("频率限制")
+                      .order(20)
+                      .executed(true)
+                      .passed(false)
+                      .matchingMethod("REDIS_COUNTER")
+                      .matched(true)
+                      .action("challenge")
+                      .reason("请求频率超限")
+                      .details("Redis 窗口计数超过配置阈值")
+                      .build()))
           .build();
     }
 
@@ -53,6 +68,19 @@ public class RateLimitFilter implements RiskFilter {
   }
 
   private RiskCheckResponse passed() {
-    return RiskCheckResponse.builder().passed(true).build();
+    return RiskCheckResponse.builder()
+        .passed(true)
+        .checks(
+            java.util.List.of(
+                RiskCheckDetail.builder()
+                    .name(getName())
+                    .displayName("频率限制")
+                    .order(20)
+                    .executed(true)
+                    .passed(true)
+                    .matchingMethod("REDIS_COUNTER")
+                    .details("Redis 窗口计数未超过配置阈值")
+                    .build()))
+        .build();
   }
 }

@@ -1,5 +1,6 @@
 package cn.edu.cqut.advisorplatform.riskcontrol.dto;
 
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,4 +19,5 @@ public class RiskCheckResponse {
   private String matchedKeyword;
   private int statusCode;
   private String message;
+  private List<RiskCheckDetail> checks;
 }

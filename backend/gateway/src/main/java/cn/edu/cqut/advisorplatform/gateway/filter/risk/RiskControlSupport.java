@@ -5,6 +5,7 @@ import cn.edu.cqut.advisorplatform.gateway.trace.TraceEventFactory;
 import cn.edu.cqut.advisorplatform.gateway.trace.TraceEventHub;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,10 +101,10 @@ public class RiskControlSupport {
                         context.getTurnId(),
                         "gateway.risk.input",
                         TraceNodeStatus.SUCCESS,
-                        "输入风控通过",
+                        "输入风控通过，已完成全部检查",
                         riskStartedAt,
                         "gateway",
-                        null));
+                        riskMetadata(response)));
                 ServerHttpRequest decoratedRequest =
                     requestBodySupport.decorateRequest(exchange, bytes);
                 return chain.filter(exchange.mutate().request(decoratedRequest).build());
@@ -119,11 +120,7 @@ public class RiskControlSupport {
                       response.getMessage(),
                       riskStartedAt,
                       "gateway",
-                      Map.of(
-                          "category",
-                          response.getCategory() == null ? "unknown" : response.getCategory(),
-                          "action",
-                          response.getAction() == null ? "reject" : response.getAction())));
+                      riskMetadata(response)));
 
               log.warn(
                   "Risk control blocked: userId={}, path={}, category={}, reason={}",
@@ -177,5 +174,22 @@ public class RiskControlSupport {
         context.getIpAddress(),
         context.getPath(),
         requestBody);
+  }
+
+  private Map<String, Object> riskMetadata(RiskCheckResponse response) {
+    Map<String, Object> metadata = new LinkedHashMap<>();
+    if (response.getChecks() != null) {
+      metadata.put("checks", response.getChecks());
+    }
+    if (response.getCategory() != null) {
+      metadata.put("category", response.getCategory());
+    }
+    if (response.getAction() != null) {
+      metadata.put("action", response.getAction());
+    }
+    if (response.getReason() != null) {
+      metadata.put("reason", response.getReason());
+    }
+    return metadata;
   }
 }

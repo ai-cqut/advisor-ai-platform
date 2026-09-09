@@ -72,13 +72,12 @@ public class TraceEventClient {
       return;
     }
     TraceNodeStatus status =
-        "tool_use".equals(event)
+        "tool_call".equals(event) || "tool_use".equals(event)
             ? TraceNodeStatus.STARTED
             : ("llm_delta".equals(event) || "llm_data".equals(event))
                 ? TraceNodeStatus.STARTED
                 : TraceNodeStatus.SUCCESS;
-    if ("tool_result".equals(event)
-        && "error".equals(String.valueOf(record.getPayload().get("status")))) {
+    if ("tool_result".equals(event) && isToolFailure(record)) {
       status = TraceNodeStatus.FAILED;
     }
     send(
@@ -146,7 +145,7 @@ public class TraceEventClient {
     return switch (event) {
       case "sys_intent_route" -> "agent.intent.route";
       case "sys_tool_plan" -> "agent.task.plan";
-      case "tool_use", "tool_result", "tool_error" -> "tool.execute";
+      case "tool_call", "tool_use", "tool_result", "tool_error" -> "tool.execute";
       case "sys_reasoning" -> "agent.reasoning";
       case "llm_delta", "llm_data", "sys_done" -> "llm.stream";
       default -> null;
@@ -154,7 +153,37 @@ public class TraceEventClient {
   }
 
   private String eventMessage(String event, StreamEventRecord record) {
-    Object toolName = record.getPayload().get("tool_name");
-    return toolName == null ? event : event + ": " + toolName;
+    Map<String, Object> payload = record.getPayload();
+    if ("sys_intent_route".equals(event)) {
+      return "意图路由：" + valueOrDefault(payload, "matched_by", "未说明");
+    }
+    if ("sys_tool_plan".equals(event)) {
+      return "任务规划：" + valueOrDefault(payload, "summary", "已生成执行计划");
+    }
+    Object toolName = payload == null ? null : payload.get("tool_name");
+    if (toolName != null) {
+      if ("tool_result".equals(event)) {
+        return "工具结果：" + toolName + (isToolFailure(record) ? "，执行失败" : "，执行成功");
+      }
+      return "调用工具：" + toolName;
+    }
+    if ("sys_reasoning".equals(event) && payload != null && payload.get("message") != null) {
+      return String.valueOf(payload.get("message"));
+    }
+    return event;
+  }
+
+  private boolean isToolFailure(StreamEventRecord record) {
+    Map<String, Object> payload = record.getPayload();
+    return payload != null
+        && (Boolean.FALSE.equals(payload.get("success"))
+            || "error".equals(String.valueOf(payload.get("status"))));
+  }
+
+  private String valueOrDefault(Map<String, Object> payload, String key, String fallback) {
+    if (payload == null || payload.get(key) == null) {
+      return fallback;
+    }
+    return String.valueOf(payload.get(key));
   }
 }

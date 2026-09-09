@@ -1,6 +1,7 @@
 package cn.edu.cqut.advisorplatform.riskcontrol.service.filter;
 
 import cn.edu.cqut.advisorplatform.riskcontrol.dao.RiskRuleDao;
+import cn.edu.cqut.advisorplatform.riskcontrol.dto.RiskCheckDetail;
 import cn.edu.cqut.advisorplatform.riskcontrol.dto.RiskCheckRequest;
 import cn.edu.cqut.advisorplatform.riskcontrol.dto.RiskCheckResponse;
 import cn.edu.cqut.advisorplatform.riskcontrol.entity.RiskRule;
@@ -31,7 +32,7 @@ public class ContentSafetyFilter implements RiskFilter {
   public RiskCheckResponse check(RiskCheckRequest request) {
     String content = request.getContent();
     if (content == null || content.isBlank()) {
-      return passed();
+      return passed(0);
     }
 
     List<RiskRule> rules =
@@ -56,13 +57,42 @@ public class ContentSafetyFilter implements RiskFilter {
             .matchedKeyword(rule.getName())
             .statusCode(400)
             .message("您的问题涉及敏感内容，无法回答")
+            .checks(
+                java.util.List.of(
+                    RiskCheckDetail.builder()
+                        .name(getName())
+                        .displayName("内容安全")
+                        .order(30)
+                        .executed(true)
+                        .passed(false)
+                        .matchingMethod("REGEX")
+                        .ruleCount(rules.size())
+                        .matched(true)
+                        .matchedRule(rule.getName())
+                        .reason("内容安全违规")
+                        .details("正则规则命中")
+                        .build()))
             .build();
       }
     }
-    return passed();
+    return passed(rules.size());
   }
 
-  private RiskCheckResponse passed() {
-    return RiskCheckResponse.builder().passed(true).build();
+  private RiskCheckResponse passed(int ruleCount) {
+    return RiskCheckResponse.builder()
+        .passed(true)
+        .checks(
+            java.util.List.of(
+                RiskCheckDetail.builder()
+                    .name(getName())
+                    .displayName("内容安全")
+                    .order(30)
+                    .executed(true)
+                    .passed(true)
+                    .matchingMethod("REGEX")
+                    .ruleCount(ruleCount)
+                    .details("已检查启用规则，未命中")
+                    .build()))
+        .build();
   }
 }

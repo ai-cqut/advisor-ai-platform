@@ -2,6 +2,7 @@ package cn.edu.cqut.advisorplatform.riskcontrol.service.filter;
 
 import cn.edu.cqut.advisorplatform.riskcontrol.dao.UserBehaviorStatDao;
 import cn.edu.cqut.advisorplatform.riskcontrol.dao.UserViolationDao;
+import cn.edu.cqut.advisorplatform.riskcontrol.dto.RiskCheckDetail;
 import cn.edu.cqut.advisorplatform.riskcontrol.dto.RiskCheckRequest;
 import cn.edu.cqut.advisorplatform.riskcontrol.dto.RiskCheckResponse;
 import cn.edu.cqut.advisorplatform.riskcontrol.entity.UserBehaviorStat;
@@ -52,6 +53,19 @@ public class UserBehaviorFilter implements RiskFilter {
           .category("user_behavior")
           .statusCode(403)
           .message("您的账号因异常行为已被封禁")
+          .checks(
+              java.util.List.of(
+                  RiskCheckDetail.builder()
+                      .name(getName())
+                      .displayName("用户行为")
+                      .order(60)
+                      .executed(true)
+                      .passed(false)
+                      .matchingMethod("BEHAVIOR_STATISTICS")
+                      .matched(true)
+                      .reason("用户行为异常，违规次数过多")
+                      .details("近 30 天违规次数达到封禁阈值")
+                      .build()))
           .build();
     }
 
@@ -72,6 +86,19 @@ public class UserBehaviorFilter implements RiskFilter {
             .category("user_behavior")
             .statusCode(202)
             .message("当前请求已进入人工复核")
+            .checks(
+                java.util.List.of(
+                    RiskCheckDetail.builder()
+                        .name(getName())
+                        .displayName("用户行为")
+                        .order(60)
+                        .executed(true)
+                        .passed(false)
+                        .matchingMethod("BEHAVIOR_STATISTICS")
+                        .matched(true)
+                        .reason("检测到可疑行为模式")
+                        .details("用户行为统计命中可疑模式")
+                        .build()))
             .build();
       }
     }
@@ -80,6 +107,19 @@ public class UserBehaviorFilter implements RiskFilter {
   }
 
   private RiskCheckResponse passed() {
-    return RiskCheckResponse.builder().passed(true).build();
+    return RiskCheckResponse.builder()
+        .passed(true)
+        .checks(
+            java.util.List.of(
+                RiskCheckDetail.builder()
+                    .name(getName())
+                    .displayName("用户行为")
+                    .order(60)
+                    .executed(true)
+                    .passed(true)
+                    .matchingMethod("BEHAVIOR_STATISTICS")
+                    .details("违规次数和当日行为模式均正常")
+                    .build()))
+        .build();
   }
 }
