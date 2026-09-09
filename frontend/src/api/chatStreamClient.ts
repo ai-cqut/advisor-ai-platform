@@ -29,7 +29,10 @@ export async function streamChat(payload: StreamPayload, handlers: StreamHandler
     const endpoint = resolveAgentStreamEndpoint(getAuthToken())
     const response = await fetch(endpoint.url, {
       method: 'POST',
-      headers: endpoint.headers,
+      headers: {
+        ...endpoint.headers,
+        ...(payload.traceId ? { 'X-Trace-Id': payload.traceId } : {}),
+      },
       body: JSON.stringify(payload),
       signal: controller.signal,
     })

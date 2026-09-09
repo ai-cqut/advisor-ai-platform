@@ -47,6 +47,8 @@ spring:
 advisor:
   internal:
     token: ${INTERNAL_SERVICE_TOKEN:}
+  trace:
+    gateway-base-url: ${TRACE_GATEWAY_BASE_URL:http://127.0.0.1:8080}
   jwt:
     secret: ${JWT_SECRET:${ADVISOR_JWT_SECRET:}}
     expiration: ${JWT_EXPIRE_MS:86400000}
@@ -56,6 +58,7 @@ advisor:
     base-url: ${AGENT_BASE_URL:http://127.0.0.1:8001}
     api-token: ${AGENT_API_TOKEN:${INTERNAL_SERVICE_TOKEN:}}
     timeout-ms: ${AGENT_TIMEOUT_MS:600000}
+    title-timeout-ms: ${AGENT_TITLE_TIMEOUT_MS:10000}
     debug-stream: ${DEBUG_STREAM:false}
   ai-gateway:
     enabled: ${AI_GATEWAY_ENABLED:false}

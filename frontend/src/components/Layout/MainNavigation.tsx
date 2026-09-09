@@ -7,6 +7,7 @@ import {
   IssuesCloseOutlined,
   LineChartOutlined,
   MessageOutlined,
+  NodeIndexOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
 import styles from './MainLayout.module.css'
@@ -27,6 +28,7 @@ export default function MainNavigation({ role, selectedPath, onNavigate }: MainN
           { key: '/attendance', icon: <CheckCircleOutlined />, label: '课堂考勤' },
           { key: '/rag', icon: <DatabaseOutlined />, label: '知识库管理' },
           { key: '/chat', icon: <MessageOutlined />, label: 'AI 对话' },
+          { key: '/trace', icon: <NodeIndexOutlined />, label: '链路追踪' },
         ]
       : []),
     ...(role === 'MONITOR'

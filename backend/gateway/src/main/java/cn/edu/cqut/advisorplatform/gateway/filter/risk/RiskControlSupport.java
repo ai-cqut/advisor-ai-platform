@@ -1,7 +1,11 @@
 package cn.edu.cqut.advisorplatform.gateway.filter.risk;
 
+import cn.edu.cqut.advisorplatform.common.trace.TraceNodeStatus;
+import cn.edu.cqut.advisorplatform.gateway.trace.TraceEventFactory;
+import cn.edu.cqut.advisorplatform.gateway.trace.TraceEventHub;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,11 +39,21 @@ public class RiskControlSupport {
   private final RiskInputCheckClient riskInputCheckClient;
   private final RiskInputMetricsSupport metricsSupport;
   private final RiskRequestBodySupport requestBodySupport = new RiskRequestBodySupport();
+  private final TraceEventHub traceEventHub;
+  private final TraceEventFactory traceEventFactory = new TraceEventFactory();
 
   public RiskControlSupport(WebClient.Builder webClientBuilder, MeterRegistry meterRegistry) {
+    this(webClientBuilder, meterRegistry, new TraceEventHub());
+  }
+
+  public RiskControlSupport(
+      WebClient.Builder webClientBuilder,
+      MeterRegistry meterRegistry,
+      TraceEventHub traceEventHub) {
     WebClient webClient = webClientBuilder.build();
     this.riskInputCheckClient = new RiskInputCheckClient(webClient);
     this.metricsSupport = new RiskInputMetricsSupport(meterRegistry, pathPolicy);
+    this.traceEventHub = traceEventHub;
   }
 
   public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -49,29 +63,65 @@ public class RiskControlSupport {
     }
 
     RiskInputRequestContext context = RiskInputRequestContext.from(exchange);
+    long riskStartedAt = System.currentTimeMillis();
+    traceEventHub.publish(
+        traceEventFactory.create(
+            context.getTraceId(),
+            context.getTurnId(),
+            "gateway.risk.input",
+            TraceNodeStatus.STARTED,
+            "正在进行输入风控",
+            riskStartedAt,
+            "gateway",
+            Map.of("path", context.getPath())));
     return requestBodySupport
         .readBody(exchange)
-        .flatMap(bytes -> handleRequest(exchange, chain, context, bytes))
-        .onErrorResume(e -> handleFailure(exchange, chain, context.getPath(), e));
+        .flatMap(bytes -> handleRequest(exchange, chain, context, bytes, riskStartedAt))
+        .onErrorResume(e -> handleFailure(exchange, chain, context, e, riskStartedAt));
   }
 
   private Mono<Void> handleRequest(
       ServerWebExchange exchange,
       GatewayFilterChain chain,
       RiskInputRequestContext context,
-      byte[] bytes) {
+      byte[] bytes,
+      long riskStartedAt) {
     String requestBody = new String(bytes, StandardCharsets.UTF_8);
     return callRiskControlService(context, requestBody)
         .flatMap(
             response -> {
               if (response.isPassed()) {
                 metricsSupport.recordPass(context.getPath());
+                traceEventHub.publish(
+                    traceEventFactory.create(
+                        context.getTraceId(),
+                        context.getTurnId(),
+                        "gateway.risk.input",
+                        TraceNodeStatus.SUCCESS,
+                        "输入风控通过",
+                        riskStartedAt,
+                        "gateway",
+                        null));
                 ServerHttpRequest decoratedRequest =
                     requestBodySupport.decorateRequest(exchange, bytes);
                 return chain.filter(exchange.mutate().request(decoratedRequest).build());
               }
 
               metricsSupport.recordBlock(context.getPath(), response);
+              traceEventHub.publish(
+                  traceEventFactory.create(
+                      context.getTraceId(),
+                      context.getTurnId(),
+                      "gateway.risk.input",
+                      TraceNodeStatus.FAILED,
+                      response.getMessage(),
+                      riskStartedAt,
+                      "gateway",
+                      Map.of(
+                          "category",
+                          response.getCategory() == null ? "unknown" : response.getCategory(),
+                          "action",
+                          response.getAction() == null ? "reject" : response.getAction())));
 
               log.warn(
                   "Risk control blocked: userId={}, path={}, category={}, reason={}",
@@ -84,9 +134,24 @@ public class RiskControlSupport {
   }
 
   private Mono<Void> handleFailure(
-      ServerWebExchange exchange, GatewayFilterChain chain, String path, Throwable error) {
+      ServerWebExchange exchange,
+      GatewayFilterChain chain,
+      RiskInputRequestContext context,
+      Throwable error,
+      long riskStartedAt) {
+    String path = context.getPath();
     boolean failClosed = pathPolicy.shouldFailClosed(path, failOpenDefault, failClosedPaths);
     metricsSupport.recordError(path, failClosed);
+    traceEventHub.publish(
+        traceEventFactory.create(
+            context.getTraceId(),
+            context.getTurnId(),
+            "gateway.risk.input",
+            failClosed ? TraceNodeStatus.FAILED : TraceNodeStatus.SKIPPED,
+            failClosed ? "风控服务不可用，请求被阻断" : "风控服务不可用，按 fail-open 放行",
+            riskStartedAt,
+            "gateway",
+            Map.of("mode", failClosed ? "fail_closed" : "fail_open")));
 
     log.error(
         "Risk control service call failed: path={}, mode={}",

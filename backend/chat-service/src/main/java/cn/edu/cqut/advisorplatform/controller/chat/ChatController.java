@@ -10,6 +10,7 @@ import cn.edu.cqut.advisorplatform.entity.audit.AuditModule;
 import cn.edu.cqut.advisorplatform.service.agent.AgentProxyService;
 import cn.edu.cqut.advisorplatform.service.chat.ChatMessageService;
 import cn.edu.cqut.advisorplatform.service.chat.ChatService;
+import cn.edu.cqut.advisorplatform.service.trace.TraceEventClient;
 import cn.edu.cqut.advisorplatform.utils.LogTraceUtil;
 import jakarta.validation.Valid;
 import java.util.Map;
@@ -51,6 +52,7 @@ public class ChatController {
   private final ChatOnceResponseHandler onceResponseHandler = new ChatOnceResponseHandler();
   private final ChatTurnPersistenceSupport turnPersistenceSupport =
       new ChatTurnPersistenceSupport();
+  private final TraceEventClient traceEventClient;
 
   @PostMapping("/sessions/{sessionId}/messages")
   @Auditable(
@@ -115,7 +117,8 @@ public class ChatController {
             chatMessageService,
             sseResponseWriter,
             turnPersistenceSupport,
-            support);
+            support,
+            traceEventClient);
 
     return ResponseEntity.ok()
         .contentType(MediaType.TEXT_EVENT_STREAM)

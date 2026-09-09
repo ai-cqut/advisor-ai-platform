@@ -8,12 +8,22 @@ public class RiskInputRequestContext {
   private final String userId;
   private final String sessionId;
   private final String ipAddress;
+  private final String traceId;
+  private final String turnId;
 
-  private RiskInputRequestContext(String path, String userId, String sessionId, String ipAddress) {
+  private RiskInputRequestContext(
+      String path,
+      String userId,
+      String sessionId,
+      String ipAddress,
+      String traceId,
+      String turnId) {
     this.path = path;
     this.userId = userId;
     this.sessionId = sessionId;
     this.ipAddress = ipAddress;
+    this.traceId = traceId;
+    this.turnId = turnId;
   }
 
   public static RiskInputRequestContext from(ServerWebExchange exchange) {
@@ -24,7 +34,9 @@ public class RiskInputRequestContext {
         exchange.getRequest().getRemoteAddress() != null
             ? exchange.getRequest().getRemoteAddress().getAddress().getHostAddress()
             : "unknown";
-    return new RiskInputRequestContext(path, userId, sessionId, ipAddress);
+    String traceId = exchange.getRequest().getHeaders().getFirst("X-Trace-Id");
+    String turnId = exchange.getRequest().getHeaders().getFirst("X-Turn-Id");
+    return new RiskInputRequestContext(path, userId, sessionId, ipAddress, traceId, turnId);
   }
 
   public String getPath() {
@@ -41,5 +53,13 @@ public class RiskInputRequestContext {
 
   public String getIpAddress() {
     return ipAddress;
+  }
+
+  public String getTraceId() {
+    return traceId;
+  }
+
+  public String getTurnId() {
+    return turnId;
   }
 }

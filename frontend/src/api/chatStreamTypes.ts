@@ -8,6 +8,7 @@ export interface StreamPayload {
   messages: ChatStreamMessageDTO[]
   sessionId: number
   attachments?: number[]
+  traceId?: string
 }
 
 export interface StreamSourceItem {

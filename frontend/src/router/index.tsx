@@ -16,6 +16,7 @@ const AttendanceManagementPage = lazy(() => import('../pages/CheckIn/AttendanceM
 const FeedbackIssueListPage = lazy(() => import('../pages/Feedback/FeedbackIssueListPage'))
 const FeedbackIssueDetailPage = lazy(() => import('../pages/Feedback/FeedbackIssueDetailPage'))
 const NotFound = lazy(() => import('../pages/NotFound'))
+const TracePage = lazy(() => import('../pages/Trace/TracePage'))
 
 function PageSuspense({ children }: { children: ReactNode }) {
   return <Suspense fallback={null}>{children}</Suspense>
@@ -69,6 +70,14 @@ export default function AppRouter() {
           element={
             <AdvisorRoute>
               <PageSuspense><ChatPage /></PageSuspense>
+            </AdvisorRoute>
+          }
+        />
+        <Route
+          path="trace"
+          element={
+            <AdvisorRoute>
+              <PageSuspense><TracePage /></PageSuspense>
             </AdvisorRoute>
           }
         />

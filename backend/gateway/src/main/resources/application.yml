@@ -65,6 +65,8 @@ management:
         include: health,info,prometheus,metrics
 
 advisor:
+  internal:
+    token: ${INTERNAL_SERVICE_TOKEN:}
   jwt:
     secret: ${JWT_SECRET:${ADVISOR_JWT_SECRET:}}
     expiration: ${JWT_EXPIRE_MS:86400000}

@@ -4,6 +4,7 @@ import cn.edu.cqut.advisorplatform.entity.chat.SourceReference;
 import cn.edu.cqut.advisorplatform.entity.chat.StreamEventRecord;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 class AgentStreamEventCollector {
 
@@ -13,18 +14,28 @@ class AgentStreamEventCollector {
   private final SseEventParser sseEventParser;
   private final StreamEventPersistencePolicy persistencePolicy;
   private final boolean debugStream;
+  private final Consumer<StreamEventRecord> eventConsumer;
 
   AgentStreamEventCollector(SseEventParser sseEventParser, boolean debugStream) {
-    this(sseEventParser, new StreamEventPersistencePolicy(), debugStream);
+    this(sseEventParser, new StreamEventPersistencePolicy(), debugStream, ignored -> {});
   }
 
   AgentStreamEventCollector(
       SseEventParser sseEventParser,
       StreamEventPersistencePolicy persistencePolicy,
       boolean debugStream) {
+    this(sseEventParser, persistencePolicy, debugStream, ignored -> {});
+  }
+
+  AgentStreamEventCollector(
+      SseEventParser sseEventParser,
+      StreamEventPersistencePolicy persistencePolicy,
+      boolean debugStream,
+      Consumer<StreamEventRecord> eventConsumer) {
     this.sseEventParser = sseEventParser;
     this.persistencePolicy = persistencePolicy;
     this.debugStream = debugStream;
+    this.eventConsumer = eventConsumer;
   }
 
   int collect(
@@ -78,10 +89,13 @@ class AgentStreamEventCollector {
 
   private void collectPersistentEvent(
       String eventName, String block, List<StreamEventRecord> events) {
+    StreamEventRecord record = sseEventParser.extractStreamEventRecord(eventName, block);
+    if (record != null) {
+      eventConsumer.accept(record);
+    }
     if (!persistencePolicy.shouldPersist(eventName) || events.size() >= MAX_PERSISTED_EVENTS) {
       return;
     }
-    StreamEventRecord record = sseEventParser.extractStreamEventRecord(eventName, block);
     if (record != null) {
       events.add(record);
     }

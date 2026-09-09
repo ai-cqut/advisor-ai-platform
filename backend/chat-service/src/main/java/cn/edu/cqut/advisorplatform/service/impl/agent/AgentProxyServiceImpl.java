@@ -3,6 +3,7 @@ package cn.edu.cqut.advisorplatform.service.impl.agent;
 import cn.edu.cqut.advisorplatform.dto.request.chat.ChatStreamRequestDTO;
 import cn.edu.cqut.advisorplatform.service.agent.AgentProxyService;
 import cn.edu.cqut.advisorplatform.service.model.ChatStreamProxyResult;
+import cn.edu.cqut.advisorplatform.service.trace.TraceEventClient;
 import cn.edu.cqut.advisorplatform.utils.LogTraceUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -44,10 +45,15 @@ public class AgentProxyServiceImpl implements AgentProxyService {
       @Value("${advisor.ai-gateway.model:gpt-4.1-mini}") String aiGatewayModel,
       @Value("${advisor.agent.timeout-ms:600000}") long timeoutMs,
       @Value("${advisor.agent.first-chunk-timeout-ms:120000}") long firstChunkTimeoutMs,
-      @Value("${advisor.agent.debug-stream:${DEBUG_STREAM:false}}") boolean debugStream) {
+      @Value("${advisor.agent.debug-stream:${DEBUG_STREAM:false}}") boolean debugStream,
+      TraceEventClient traceEventClient) {
     SseEventParser parser = new SseEventParser(objectMapper);
     AgentStreamEventCollector streamEventCollector =
-        new AgentStreamEventCollector(parser, debugStream);
+        new AgentStreamEventCollector(
+            parser,
+            new StreamEventPersistencePolicy(),
+            debugStream,
+            traceEventClient::publishAgentEvent);
     this.payloadBuilder = new AgentPayloadBuilder(objectMapper);
     this.agentBaseUrl = agentBaseUrl;
     this.agentApiToken = agentApiToken;
