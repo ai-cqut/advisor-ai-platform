@@ -23,6 +23,7 @@ import type { TraceEvent } from './traceTypes'
 import { TraceEventTimeline } from './TraceEventTimeline'
 import { TraceNodeCard } from './TraceNodeCard'
 import { TraceNodeDetail } from './TraceNodeDetail'
+import { TRACE_DEMO_PROMPT_GROUPS } from './traceDemoPrompts'
 import styles from './TracePage.module.css'
 
 const { TextArea } = Input
@@ -40,6 +41,7 @@ export default function TracePage() {
   const [selectedNodeId, setSelectedNodeId] = useState<string>()
   const [startedAt, setStartedAt] = useState<number>()
   const [elapsedMs, setElapsedMs] = useState(0)
+  const [selectedDemoId, setSelectedDemoId] = useState('')
   const eventSourceRef = useRef<EventSource | null>(null)
   const stopTimerRef = useRef<number | null>(null)
   const traceCompletedRef = useRef(false)
@@ -184,6 +186,13 @@ export default function TracePage() {
     }
   }
 
+  const fillDemoPrompt = (demoId: string, prompt: string) => {
+    if (running) return
+    setQuestion(prompt)
+    setSelectedDemoId(demoId)
+    messageApi.success('演示 Prompt 已填入')
+  }
+
   const selectedDefinition = selectedNodeId ? definitionForNode(selectedNodeId) : undefined
   const selectedEvent = selectedNodeId ? latestEventForNode(events, selectedNodeId) : undefined
   const receivedEventCount = events.length + pendingCount
@@ -220,6 +229,40 @@ export default function TracePage() {
           autoSize={{ minRows: 2, maxRows: 4 }}
           placeholder="输入一个问题，触发真实 AI 链路"
         />
+        <div className={styles.demoPanel}>
+          <div className={styles.demoHeading}>
+            <div>
+              <Typography.Text strong>演示场景</Typography.Text>
+              <Typography.Text type="secondary">一键填充 Prompt，再发送真实请求</Typography.Text>
+            </div>
+            <Tag color="blue">面试演示</Tag>
+          </div>
+          <div className={styles.demoGroups}>
+            {TRACE_DEMO_PROMPT_GROUPS.map((group) => (
+              <div className={styles.demoGroup} key={group.id}>
+                <div className={styles.demoGroupTitle}>
+                  <strong>{group.title}</strong>
+                  <span>{group.description}</span>
+                </div>
+                <div className={styles.demoButtons}>
+                  {group.prompts.map((demo) => (
+                    <Button
+                      key={demo.id}
+                      size="small"
+                      type={selectedDemoId === demo.id ? 'primary' : 'default'}
+                      danger={demo.tone === 'risk' && selectedDemoId !== demo.id}
+                      disabled={running}
+                      onClick={() => fillDemoPrompt(demo.id, demo.prompt)}
+                    >
+                      {demo.title}
+                      <span className={styles.demoButtonHint}>{demo.description}</span>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
         <Space>
           <Button type="primary" icon={<PlayCircleOutlined />} loading={running} onClick={() => void runTrace()}>
             发送真实请求
