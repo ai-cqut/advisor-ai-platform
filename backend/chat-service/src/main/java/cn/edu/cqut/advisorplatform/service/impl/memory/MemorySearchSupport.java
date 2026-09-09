@@ -76,25 +76,17 @@ public class MemorySearchSupport {
     try {
       MemoryVectorService vectorService = memoryServiceFactory.getService(vectorStore);
       double[] queryEmbedding = embeddingService.embed(request.getQuery());
-      return vectorService.search(
-          request.getUserId(), request.getKnowledgeBaseId(), queryEmbedding, topK);
+      return vectorService.search(request.getUserId(), 0L, queryEmbedding, topK);
     } catch (Exception exc) {
       log.warn(
-          "memory_vector_search_failed userId={}, knowledgeBaseId={}, err={}",
-          request.getUserId(),
-          request.getKnowledgeBaseId(),
-          exc.getMessage());
+          "memory_vector_search_failed userId={}, err={}", request.getUserId(), exc.getMessage());
       return searchText(request, request.getQuery(), topK);
     }
   }
 
   private List<UserMemoryDO> searchText(MemorySearchRequestDTO request, String query, int topK) {
     return userMemoryDao.searchByScope(
-        request.getUserId(),
-        request.getKnowledgeBaseId(),
-        query,
-        LocalDateTime.now(),
-        PageRequest.of(0, topK));
+        request.getUserId(), 0L, query, LocalDateTime.now(), PageRequest.of(0, topK));
   }
 
   private List<UserMemoryDO> searchHybrid(
@@ -110,24 +102,15 @@ public class MemorySearchSupport {
     try {
       MemoryVectorService vectorService = memoryServiceFactory.getService(vectorStore);
       double[] queryEmbedding = embeddingService.embed(query);
-      vectorResults =
-          vectorService.search(
-              request.getUserId(), request.getKnowledgeBaseId(), queryEmbedding, recallK);
+      vectorResults = vectorService.search(request.getUserId(), 0L, queryEmbedding, recallK);
     } catch (Exception exc) {
-      log.warn(
-          "memory_hybrid_vector_fallback userId={}, knowledgeBaseId={}",
-          request.getUserId(),
-          request.getKnowledgeBaseId());
+      log.warn("memory_hybrid_vector_fallback userId={}", request.getUserId());
       return searchText(request, query, topK);
     }
 
     List<UserMemoryDO> textResults =
         userMemoryDao.searchByScope(
-            request.getUserId(),
-            request.getKnowledgeBaseId(),
-            query,
-            LocalDateTime.now(),
-            PageRequest.of(0, recallK));
+            request.getUserId(), 0L, query, LocalDateTime.now(), PageRequest.of(0, recallK));
 
     return hybridResultMerger.merge(
         vectorResults, textResults, topK, hybridVectorWeight, hybridTextWeight);
@@ -201,12 +184,7 @@ public class MemorySearchSupport {
   private List<UserMemoryDO> searchTextByType(
       MemorySearchRequestDTO request, String query, int topK, String memoryType) {
     return userMemoryDao.searchByScopeAndType(
-        request.getUserId(),
-        request.getKnowledgeBaseId(),
-        query,
-        LocalDateTime.now(),
-        memoryType,
-        PageRequest.of(0, topK));
+        request.getUserId(), 0L, query, LocalDateTime.now(), memoryType, PageRequest.of(0, topK));
   }
 
   private List<UserMemoryDO> searchHybridByType(
@@ -224,24 +202,16 @@ public class MemorySearchSupport {
       MemoryVectorService vectorService = memoryServiceFactory.getService(vectorStore);
       double[] queryEmbedding = embeddingService.embed(query);
       vectorResults =
-          vectorService.searchByType(
-              request.getUserId(),
-              request.getKnowledgeBaseId(),
-              queryEmbedding,
-              recallK,
-              memoryType);
+          vectorService.searchByType(request.getUserId(), 0L, queryEmbedding, recallK, memoryType);
     } catch (Exception exc) {
-      log.warn(
-          "memory_hybrid_vector_fallback userId={}, knowledgeBaseId={}",
-          request.getUserId(),
-          request.getKnowledgeBaseId());
+      log.warn("memory_hybrid_vector_fallback userId={}", request.getUserId());
       return searchTextByType(request, query, topK, memoryType);
     }
 
     List<UserMemoryDO> textResults =
         userMemoryDao.searchByScopeAndType(
             request.getUserId(),
-            request.getKnowledgeBaseId(),
+            0L,
             query,
             LocalDateTime.now(),
             memoryType,
@@ -256,13 +226,11 @@ public class MemorySearchSupport {
     try {
       MemoryVectorService vectorService = memoryServiceFactory.getService(vectorStore);
       double[] queryEmbedding = embeddingService.embed(request.getQuery());
-      return vectorService.searchByType(
-          request.getUserId(), request.getKnowledgeBaseId(), queryEmbedding, topK, memoryType);
+      return vectorService.searchByType(request.getUserId(), 0L, queryEmbedding, topK, memoryType);
     } catch (Exception exc) {
       log.warn(
-          "memory_vector_search_by_type_failed userId={}, knowledgeBaseId={}, memoryType={}, err={}",
+          "memory_vector_search_by_type_failed userId={}, memoryType={}, err={}",
           request.getUserId(),
-          request.getKnowledgeBaseId(),
           memoryType,
           exc.getMessage());
       return searchTextByType(request, request.getQuery(), topK, memoryType);

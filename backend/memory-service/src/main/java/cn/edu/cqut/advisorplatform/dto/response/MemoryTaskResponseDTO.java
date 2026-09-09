@@ -15,7 +15,6 @@ public class MemoryTaskResponseDTO {
 
   private Long id;
   private Long userId;
-  private Long knowledgeBaseId;
   private Long sessionId;
   private String turnId;
   private String status;
@@ -30,7 +29,6 @@ public class MemoryTaskResponseDTO {
     return MemoryTaskResponseDTO.builder()
         .id(task.getId())
         .userId(task.getUserId())
-        .knowledgeBaseId(task.getKnowledgeBaseId())
         .sessionId(task.getSessionId())
         .turnId(task.getTurnId())
         .status(task.getStatus())

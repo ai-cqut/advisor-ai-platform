@@ -19,16 +19,16 @@ export class MemoryApiClient {
     this.httpClient = new MemoryApiHttpClient(config);
   }
 
-  async searchLongTerm(userId: number, knowledgeBaseId: number, query: string, topK: number): Promise<MemoryItem[]> {
+  async searchLongTerm(userId: number, query: string, topK: number): Promise<MemoryItem[]> {
     const response = await this.httpClient.request<MemoryItem[]>(
       this.endpointFactory.longTermSearch(),
-      this.postRequestFactory.createLongTermSearch(userId, knowledgeBaseId, query, topK)
+      this.postRequestFactory.createLongTermSearch(userId, query, topK)
     );
     return this.arrayResponseReader.read(response);
   }
 
-  async getCoreMemories(userId: number, knowledgeBaseId: number): Promise<MemoryItem[]> {
-    const response = await this.httpClient.request<MemoryItem[]>(this.endpointFactory.coreMemories(userId, knowledgeBaseId));
+  async getCoreMemories(userId: number): Promise<MemoryItem[]> {
+    const response = await this.httpClient.request<MemoryItem[]>(this.endpointFactory.coreMemories(userId));
     return this.arrayResponseReader.read(response);
   }
 

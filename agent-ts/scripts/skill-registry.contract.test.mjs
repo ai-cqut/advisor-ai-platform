@@ -39,7 +39,7 @@ test("openai tool registry executes expand skill as a virtual tool", async () =>
 
   const openAiToolRegistry = new OpenAiToolRegistry(undefined, undefined, undefined, undefined, undefined, registry);
   const result = await openAiToolRegistry.executeTool(
-    { messages: [], userId: null, sessionId: null, knowledgeBaseId: null, traceId: null, turnId: null },
+    { messages: [], userId: null, sessionId: null, traceId: null, turnId: null },
     "expand_skill",
     { skill_name: "knowledge_qa" }
   );
@@ -65,7 +65,7 @@ test("openai tool registry executes tool search as a virtual tool", async () => 
 
   const openAiToolRegistry = new OpenAiToolRegistry(undefined, undefined, undefined, undefined, undefined, registry);
   const result = await openAiToolRegistry.executeTool(
-    { messages: [], userId: null, sessionId: null, knowledgeBaseId: null, traceId: null, turnId: null },
+    { messages: [], userId: null, sessionId: null, traceId: null, turnId: null },
     "tool_search",
     { keywords: "知识 检索", max_results: 3 }
   );
@@ -91,7 +91,7 @@ test("openai tool registry tool search can hit web research by search hint", asy
 
   const openAiToolRegistry = new OpenAiToolRegistry(undefined, undefined, undefined, undefined, undefined, registry);
   const result = await openAiToolRegistry.executeTool(
-    { messages: [], userId: null, sessionId: null, knowledgeBaseId: null, traceId: null, turnId: null },
+    { messages: [], userId: null, sessionId: null, traceId: null, turnId: null },
     "tool_search",
     { keywords: "联网 搜索", max_results: 3 }
   );
@@ -104,7 +104,7 @@ test("tool search rejects empty keywords", () => {
   const registry = new SkillRegistry();
   const tool = new OpenAiToolRegistry(undefined, undefined, undefined, undefined, undefined, registry);
   return tool.executeTool(
-    { messages: [], userId: null, sessionId: null, knowledgeBaseId: null, traceId: null, turnId: null },
+    { messages: [], userId: null, sessionId: null, traceId: null, turnId: null },
     "tool_search",
     { keywords: "" }
   ).then((result) => {

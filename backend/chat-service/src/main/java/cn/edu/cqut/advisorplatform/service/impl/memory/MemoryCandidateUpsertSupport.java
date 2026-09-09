@@ -55,11 +55,7 @@ public class MemoryCandidateUpsertSupport {
         double[] embedding = embeddingService.embed(normalizedContent);
         if (vectorService != null) {
           Optional<UserMemoryDO> similar =
-              vectorService.findSimilar(
-                  request.getUserId(),
-                  request.getKnowledgeBaseId(),
-                  embedding,
-                  SIMILARITY_THRESHOLD);
+              vectorService.findSimilar(request.getUserId(), 0L, embedding, SIMILARITY_THRESHOLD);
           if (similar.isPresent()) {
             entityFactory.updateSimilarMemory(
                 similar.get(), candidate, normalizedContent, confidence);
@@ -78,19 +74,14 @@ public class MemoryCandidateUpsertSupport {
         }
         accepted++;
       } catch (Exception exc) {
-        log.warn(
-            "memory_write_failed userId={}, knowledgeBaseId={}, err={}",
-            request.getUserId(),
-            request.getKnowledgeBaseId(),
-            exc.getMessage());
+        log.warn("memory_write_failed userId={}, err={}", request.getUserId(), exc.getMessage());
         rejected++;
       }
     }
 
     log.info(
-        "memory_write_done userId={}, knowledgeBaseId={}, accepted={}, rejected={}, elapsedMs={}",
+        "memory_write_done userId={}, accepted={}, rejected={}, elapsedMs={}",
         request.getUserId(),
-        request.getKnowledgeBaseId(),
         accepted,
         rejected,
         System.currentTimeMillis() - startedAt);

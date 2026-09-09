@@ -26,7 +26,7 @@ public class MemoryTaskSupport {
     }
     var task = new MemoryTaskDO();
     task.setUserId(request.getUserId());
-    task.setKnowledgeBaseId(request.getKnowledgeBaseId());
+    task.setKnowledgeBaseId(0L);
     task.setSessionId(request.getSessionId());
     task.setTurnId(request.getTurnId());
     task.setStatus("pending");

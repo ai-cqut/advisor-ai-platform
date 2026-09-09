@@ -3,8 +3,8 @@ export class MemoryApiEndpointFactory {
     return "/api/memory/long-term/search";
   }
 
-  coreMemories(userId: number, knowledgeBaseId: number): string {
-    const params = new URLSearchParams({ userId: String(userId), knowledgeBaseId: String(knowledgeBaseId) });
+  coreMemories(userId: number): string {
+    const params = new URLSearchParams({ userId: String(userId) });
     return `/api/memory/long-term/core?${params}`;
   }
 

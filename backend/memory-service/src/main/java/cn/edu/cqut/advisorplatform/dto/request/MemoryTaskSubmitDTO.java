@@ -12,8 +12,6 @@ public class MemoryTaskSubmitDTO {
 
   @NotNull private Long userId;
 
-  @NotNull private Long knowledgeBaseId;
-
   @NotNull private Long sessionId;
 
   @NotBlank private String turnId;

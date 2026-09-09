@@ -80,6 +80,13 @@ public class RagServiceImpl implements RagService {
   }
 
   @Override
+  public List<RagDocumentResponseDTO> listAllDocuments() {
+    return documentDao.findAllByOrderByCreatedAtDesc().stream()
+        .map(RagDocumentResponseDTO::from)
+        .collect(Collectors.toList());
+  }
+
+  @Override
   @Transactional
   public RagDocumentResponseDTO uploadDocument(
       Long knowledgeBaseId, MultipartFile file, @Nullable UserPrincipal currentUser) {

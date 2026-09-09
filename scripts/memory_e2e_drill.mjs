@@ -144,7 +144,6 @@ async function main() {
     headers: memoryAuth,
     body: JSON.stringify({
       userId,
-      knowledgeBaseId: 0,
       candidates: [
         {
           content: `memory e2e candidate ${Date.now()}`,
@@ -163,7 +162,6 @@ async function main() {
     headers: memoryAuth,
     body: JSON.stringify({
       userId,
-      knowledgeBaseId: 0,
       query: 'memory e2e candidate',
       topK: 5,
       mode: 'hybrid',
@@ -204,7 +202,6 @@ async function main() {
     headers: memoryAuth,
     body: JSON.stringify({
       userId,
-      knowledgeBaseId: 0,
       sessionId,
       turnId: turnIdDone,
       userText: 'memory e2e user text',
@@ -227,7 +224,6 @@ async function main() {
     headers: memoryAuth,
     body: JSON.stringify({
       userId,
-      knowledgeBaseId: 0,
       sessionId,
       turnId: turnIdFail,
       userText: 'memory e2e user text #2',

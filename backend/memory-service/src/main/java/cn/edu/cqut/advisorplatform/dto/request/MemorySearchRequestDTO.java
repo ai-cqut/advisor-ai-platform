@@ -12,8 +12,6 @@ public class MemorySearchRequestDTO {
 
   @NotNull private Long userId;
 
-  @NotNull private Long knowledgeBaseId;
-
   @Nullable private String query = "";
 
   @Min(1)

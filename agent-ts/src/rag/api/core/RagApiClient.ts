@@ -13,13 +13,13 @@ export class RagApiClient {
     this.httpClient = new RagApiHttpClient(config);
   }
 
-  async listDocuments(knowledgeBaseId: number): Promise<RagDocument[]> {
-    const data = await this.httpClient.request<RagDocument[]>(`/internal/rag/knowledge-bases/${knowledgeBaseId}/documents`);
+  async listDocuments(): Promise<RagDocument[]> {
+    const data = await this.httpClient.request<RagDocument[]>("/internal/rag/documents");
     return Array.isArray(data) ? (data as RagDocument[]) : [];
   }
 
-  async searchDocuments(knowledgeBaseId: number, query: string, topK: number): Promise<RagDocument[]> {
-    const documents = await this.listDocuments(knowledgeBaseId);
+  async searchDocuments(query: string, topK: number): Promise<RagDocument[]> {
+    const documents = await this.listDocuments();
     const readyDocuments = this.readyDocumentSelector.select(documents);
     return this.documentRanker.rank(readyDocuments, query).slice(0, topK);
   }

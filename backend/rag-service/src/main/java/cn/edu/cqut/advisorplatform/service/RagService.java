@@ -19,6 +19,8 @@ public interface RagService {
   List<RagDocumentResponseDTO> listDocuments(
       Long knowledgeBaseId, @Nullable UserPrincipal currentUser);
 
+  List<RagDocumentResponseDTO> listAllDocuments();
+
   RagDocumentResponseDTO uploadDocument(
       Long knowledgeBaseId, MultipartFile file, @Nullable UserPrincipal currentUser);
 

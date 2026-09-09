@@ -27,4 +27,9 @@ public class RagInternalController {
   public ApiResponseDTO<List<RagDocumentResponseDTO>> listDocuments(@PathVariable("id") Long id) {
     return ApiResponseDTO.success(ragService.listDocuments(id, null));
   }
+
+  @GetMapping("/documents")
+  public ApiResponseDTO<List<RagDocumentResponseDTO>> listAllDocuments() {
+    return ApiResponseDTO.success(ragService.listAllDocuments());
+  }
 }

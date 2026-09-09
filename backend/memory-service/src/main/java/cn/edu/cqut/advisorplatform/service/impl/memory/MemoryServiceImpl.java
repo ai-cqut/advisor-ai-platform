@@ -56,9 +56,8 @@ public class MemoryServiceImpl implements MemoryService {
     memorySearchSupport.recordAccessHits(rows);
 
     log.info(
-        "memory_search_done userId={}, knowledgeBaseId={}, topK={}, mode={}, resultCount={}, elapsedMs={}",
+        "memory_search_done userId={}, topK={}, mode={}, resultCount={}, elapsedMs={}",
         request.getUserId(),
-        request.getKnowledgeBaseId(),
         topK,
         mode,
         rows.size(),
@@ -69,9 +68,8 @@ public class MemoryServiceImpl implements MemoryService {
 
   @Override
   @Transactional
-  public List<MemoryItemResponseDTO> getCoreMemories(Long userId, Long knowledgeBaseId) {
-    List<UserMemoryDO> rows =
-        userMemoryDao.findCoreMemories(userId, knowledgeBaseId, LocalDateTime.now());
+  public List<MemoryItemResponseDTO> getCoreMemories(Long userId) {
+    List<UserMemoryDO> rows = userMemoryDao.findCoreMemories(userId, 0L, LocalDateTime.now());
     return rows.stream().map(MemoryItemResponseDTO::from).toList();
   }
 

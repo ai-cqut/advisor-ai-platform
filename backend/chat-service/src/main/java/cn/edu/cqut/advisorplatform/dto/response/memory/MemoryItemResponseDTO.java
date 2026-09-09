@@ -13,7 +13,6 @@ public class MemoryItemResponseDTO {
 
   private Long id;
   private Long userId;
-  private Long knowledgeBaseId;
   private String content;
   private BigDecimal confidence;
   private BigDecimal score;
@@ -30,7 +29,6 @@ public class MemoryItemResponseDTO {
     return new MemoryItemResponseDTO(
         entity.getId(),
         entity.getUserId(),
-        entity.getKnowledgeBaseId(),
         entity.getContent(),
         entity.getConfidence(),
         entity.getScore(),

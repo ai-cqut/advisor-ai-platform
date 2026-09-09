@@ -54,7 +54,7 @@ class MemoryTaskQueueSupport {
   private MemoryTaskDO createTask(MemoryTaskSubmitDTO request) {
     MemoryTaskDO task = new MemoryTaskDO();
     task.setUserId(request.getUserId());
-    task.setKnowledgeBaseId(request.getKnowledgeBaseId());
+    task.setKnowledgeBaseId(0L);
     task.setSessionId(request.getSessionId());
     task.setTurnId(request.getTurnId());
     task.setStatus(STATUS_PENDING);

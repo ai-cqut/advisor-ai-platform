@@ -38,7 +38,7 @@ public class MemoryCandidateEntityFactory {
       BigDecimal confidence) {
     UserMemoryDO row = new UserMemoryDO();
     row.setUserId(request.getUserId());
-    row.setKnowledgeBaseId(request.getKnowledgeBaseId());
+    row.setKnowledgeBaseId(0L);
     row.setContent(normalizedContent);
     row.setConfidence(confidence);
     row.setScore(BigDecimal.ZERO.setScale(4));

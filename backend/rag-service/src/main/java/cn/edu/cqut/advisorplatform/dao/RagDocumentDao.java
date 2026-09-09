@@ -8,5 +8,7 @@ public interface RagDocumentDao extends JpaRepository<RagDocumentDO, Long> {
 
   List<RagDocumentDO> findByKnowledgeBaseIdOrderByCreatedAtDesc(Long knowledgeBaseId);
 
+  List<RagDocumentDO> findAllByOrderByCreatedAtDesc();
+
   long countByKnowledgeBaseId(Long knowledgeBaseId);
 }

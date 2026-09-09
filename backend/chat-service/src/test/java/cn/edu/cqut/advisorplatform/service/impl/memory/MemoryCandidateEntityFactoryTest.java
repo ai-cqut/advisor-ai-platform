@@ -18,7 +18,6 @@ class MemoryCandidateEntityFactoryTest {
   void createNewMemoryNormalizesCandidateFields() {
     MemoryCandidateUpsertRequestDTO request = new MemoryCandidateUpsertRequestDTO();
     request.setUserId(1L);
-    request.setKnowledgeBaseId(2L);
     request.setCandidates(List.of());
 
     MemoryCandidateItemDTO candidate = new MemoryCandidateItemDTO();
@@ -34,7 +33,7 @@ class MemoryCandidateEntityFactoryTest {
     assertThat(normalizedContent).isEqualTo("remember me");
     assertThat(confidence).isEqualByComparingTo("1.000");
     assertThat(row.getUserId()).isEqualTo(1L);
-    assertThat(row.getKnowledgeBaseId()).isEqualTo(2L);
+    assertThat(row.getKnowledgeBaseId()).isZero();
     assertThat(row.getContent()).isEqualTo("remember me");
     assertThat(row.getMemoryKey()).isEqualTo("profile.name");
     assertThat(row.getIsDeleted()).isFalse();
