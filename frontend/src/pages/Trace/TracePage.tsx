@@ -41,14 +41,13 @@ export default function TracePage() {
     const nextTraceId = crypto.randomUUID()
     setTraceId(nextTraceId)
 
-    const traceSubscription = subscribeTrace(
+    eventSourceRef.current = subscribeTrace(
       nextTraceId,
       (event) => setEvents((previous) => [...previous, event]),
-      () => undefined,
+      () => message.error('链路事件订阅失败'),
     )
 
     try {
-      eventSourceRef.current = await traceSubscription
       const sessionResponse = await chatApi.createSession()
       const sessionId = sessionResponse.data.id
       await streamChat(
