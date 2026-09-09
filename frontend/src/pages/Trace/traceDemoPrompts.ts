@@ -100,7 +100,7 @@ export const TRACE_DEMO_PROMPT_GROUPS: TraceDemoPromptGroup[] = [
         id: 'realtime-search',
         title: '实时搜索',
         description: '展示 web_search 路由',
-        prompt: '请搜索今天关于高校学生资助政策的最新信息，并总结三条变化，同时注明来源。',
+        prompt: 'https://blog.csdn.net/weixin_59727843/article/details/163076988?spm=1001.2014.3001.5501分析这个文章,在找找其他的文章,补充一下',
         tone: 'normal',
       },
     ],
