@@ -28,7 +28,7 @@ public class TraceEventController {
   }
 
   @GetMapping(value = "/api/trace/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-  public Flux<ServerSentEvent<TraceEvent>> stream(@RequestParam String traceId) {
+  public Flux<ServerSentEvent<TraceEvent>> stream(@RequestParam("traceId") String traceId) {
     return eventHub
         .subscribe(traceId)
         .map(
