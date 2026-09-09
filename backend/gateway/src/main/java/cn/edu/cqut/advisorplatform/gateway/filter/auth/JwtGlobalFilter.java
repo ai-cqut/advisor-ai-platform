@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -46,6 +47,7 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
     this(new TraceEventHub());
   }
 
+  @Autowired
   public JwtGlobalFilter(TraceEventHub traceEventHub) {
     this.traceEventHub = traceEventHub;
   }
