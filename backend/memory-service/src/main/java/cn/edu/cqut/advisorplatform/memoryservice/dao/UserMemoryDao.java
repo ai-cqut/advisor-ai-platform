@@ -58,7 +58,7 @@ public interface UserMemoryDao extends JpaRepository<UserMemoryDO, Long> {
                     SELECT *
                     FROM user_memory
                     WHERE user_id = :userId
-                      AND (:knowledgeBaseId = 0 OR kb_id = :knowledgeBaseId)
+                      AND (:knowledgeBaseId = 0 OR knowledge_base_id = :knowledgeBaseId)
                       AND is_deleted = false
                       AND embedding IS NOT NULL
                       AND (embedding <=> CAST(:embedding AS vector)) <= :maxDistance
@@ -78,7 +78,7 @@ public interface UserMemoryDao extends JpaRepository<UserMemoryDO, Long> {
                     SELECT *
                     FROM user_memory
                     WHERE user_id = :userId
-                      AND (:knowledgeBaseId = 0 OR kb_id = :knowledgeBaseId)
+                      AND (:knowledgeBaseId = 0 OR knowledge_base_id = :knowledgeBaseId)
                       AND is_deleted = false
                       AND merged_into_id IS NULL
                       AND (valid_until IS NULL OR valid_until > NOW())
@@ -99,7 +99,7 @@ public interface UserMemoryDao extends JpaRepository<UserMemoryDO, Long> {
                     SELECT *
                     FROM user_memory
                     WHERE user_id = :userId
-                      AND (:knowledgeBaseId = 0 OR kb_id = :knowledgeBaseId)
+                      AND (:knowledgeBaseId = 0 OR knowledge_base_id = :knowledgeBaseId)
                       AND is_deleted = false
                       AND merged_into_id IS NULL
                       AND (valid_until IS NULL OR valid_until > NOW())
