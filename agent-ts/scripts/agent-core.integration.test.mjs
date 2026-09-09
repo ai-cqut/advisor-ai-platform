@@ -257,7 +257,7 @@ test("AgentChatStreamSession emits legacy reasoning for education queries", asyn
   const sysToolPlan = writes.find(({ event }) => event === "sys_tool_plan");
   assert.equal(writes.some(({ event }) => event === "sys_reasoning"), true);
   assert.equal(writes.some(({ event }) => event === "sys_tool_plan"), true);
-  assert.equal(sysToolPlan.payload.routeContext.education_domain, true);
+  assert.equal(sysToolPlan.payload.route_context.education_domain, true);
   assert.equal(writes[writes.length - 1].event, "done");
 });
 

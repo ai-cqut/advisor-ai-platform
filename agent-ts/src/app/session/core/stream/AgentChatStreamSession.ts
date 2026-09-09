@@ -45,6 +45,27 @@ import type { TaskPlan } from "../../../../planning/model/TaskPlan.js";
 import { shouldUseDirectPlan } from "../../../../planning/core/PlannedTools.js";
 import { StreamProgressReporter } from "../../../../protocol/events/stream/progress/StreamProgressReporter.js";
 
+function toPlanEventPayload(taskPlan: TaskPlan): JsonObject {
+  return {
+    mode: taskPlan.mode,
+    goal: taskPlan.goal,
+    summary: taskPlan.summary,
+    stop_when: taskPlan.stopWhen,
+    sufficient: taskPlan.sufficient,
+    required_tools: [...taskPlan.requiredTools],
+    route_context: taskPlan.routeContext,
+    source: taskPlan.source,
+    steps: taskPlan.steps.map((step) => ({
+      action: step.action,
+      ...(step.toolName ? { tool_name: step.toolName } : {}),
+      ...(step.arguments ? { arguments: step.arguments } : {}),
+      reason: step.reason,
+      ...(step.expectedOutcome ? { expected_outcome: step.expectedOutcome } : {}),
+      sufficient: step.sufficient
+    }))
+  };
+}
+
 export class AgentChatStreamSession {
   private readonly missingOpenAiApiKeyFallbackGate = new AgentMissingOpenAiApiKeyFallbackGate();
   private readonly streamErrorMessageResolver = new AgentStreamErrorMessageResolver();
@@ -363,7 +384,7 @@ export class AgentChatStreamSession {
             graphContentEmitted = true;
             await writer.write("sys_reasoning", "system", buildDelegateReasoningPayload("task_planner_subagent"));
             graphContentEmitted = true;
-            await writer.write("sys_tool_plan", "system", taskPlan as unknown as JsonObject);
+            await writer.write("sys_tool_plan", "system", toPlanEventPayload(taskPlan));
             graphContentEmitted = true;
             await writer.write("sys_reasoning", "system", planReasoning);
           }

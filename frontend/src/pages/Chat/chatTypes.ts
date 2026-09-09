@@ -29,9 +29,11 @@ export interface ChatEvent {
 export interface PlanStep {
   action?: string
   tool_name?: string
+  toolName?: string
   arguments?: unknown
   reason?: string
   expected_outcome?: string
+  expectedOutcome?: string
   sufficient?: boolean
   summary?: string
 }

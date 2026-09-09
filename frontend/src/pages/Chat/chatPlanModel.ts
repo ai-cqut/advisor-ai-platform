@@ -3,7 +3,19 @@ import type { ChatEvent, ChatMessage, PlanStep } from './chatTypes'
 
 export function taskPlanFromEvents(events?: ChatEvent[]): StreamEventData | null {
   const plans = (events ?? []).filter((item) => item.event === 'sys_tool_plan')
-  return plans.length ? plans[plans.length - 1].payload : null
+  if (!plans.length) {
+    return null
+  }
+  const payload = plans[plans.length - 1].payload
+  return {
+    ...payload,
+    stop_when: payload.stop_when ?? payload.stopWhen,
+    required_tools: Array.isArray(payload.required_tools)
+      ? payload.required_tools
+      : Array.isArray(payload.requiredTools) ? payload.requiredTools : undefined,
+    route_context: payload.route_context ?? payload.routeContext,
+    steps: planStepsFromPayload(payload),
+  }
 }
 
 export function reasoningEventsFromMessage(events?: ChatEvent[]): ChatEvent[] {
@@ -24,12 +36,22 @@ export function reasoningStageLabel(stage?: string): string {
 }
 
 export function planStepsFromPayload(payload?: StreamEventData | null): PlanStep[] {
-  return Array.isArray(payload?.steps) ? payload.steps : []
+  if (!Array.isArray(payload?.steps)) {
+    return []
+  }
+  return payload.steps.map((rawStep) => {
+    const step = rawStep as PlanStep
+    return {
+      ...step,
+      tool_name: step.tool_name ?? step.toolName,
+      expected_outcome: step.expected_outcome ?? step.expectedOutcome,
+    }
+  })
 }
 
 export function planStepTitle(step: PlanStep, index: number): string {
   const action = step.action ?? ''
-  const toolName = step.tool_name ?? ''
+  const toolName = step.tool_name ?? step.toolName ?? ''
   if (action === 'call_tool' && toolName) {
     return `${index + 1}. 调用 ${toolName}`
   }
@@ -49,7 +71,7 @@ export function planStepStatus(
     }
     return msg.content.trim() ? 'running' : 'pending'
   }
-  const toolName = step.tool_name ?? ''
+  const toolName = step.tool_name ?? step.toolName ?? ''
   if (!toolName) {
     return 'pending'
   }
