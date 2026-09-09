@@ -8,6 +8,7 @@
     "start": "node dist/main.js",
     "dev": "tsx src/main.ts",
     "eval": "tsx src/evaluation/main.ts",
+    "eval:ci": "npm run build && tsx src/evaluation/main.ts --dataset evaluation/datasets/ci-smoke.json --output eval-ci-report.json --top-k 3 && node scripts/eval-ci-gate.mjs eval-ci-report.json",
     "check": "tsc -p tsconfig.json --noEmit",
     "test:contracts": "npm run build && node --test scripts/agent-loop.contract.test.mjs scripts/provider.contract.test.mjs scripts/provider-catalog.contract.test.mjs scripts/intent-router.contract.test.mjs scripts/task-planner.contract.test.mjs scripts/tool-explorer.contract.test.mjs scripts/failure-memory.contract.test.mjs scripts/fusion.contract.test.mjs scripts/graph-runner.contract.test.mjs scripts/replay-composition.contract.test.mjs scripts/eval-dataset.contract.test.mjs scripts/eval-runner.contract.test.mjs scripts/eval-report.contract.test.mjs scripts/eval-deepeval-probe.contract.test.mjs scripts/openai-chat-client.contract.test.mjs scripts/plan-tools.contract.test.mjs",
     "test:integration": "node --test scripts/agent-core.integration.test.mjs"

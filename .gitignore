@@ -20,6 +20,8 @@ pytest**/
 .tmp/
 agent/tests/reports/*.json
 agent/.deepeval/*
+agent-ts/.agent-data/
+agent-ts/eval-ci-report.json
 scripts/jmeter/results/
 jmeter/
 .claude/

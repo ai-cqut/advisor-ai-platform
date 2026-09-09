@@ -1,0 +1,14 @@
+{
+  "name": "agent-ci-smoke",
+  "version": "1.0.0",
+  "knowledge_base_id": 0,
+  "cases": [
+    {
+      "id": "basic-factual-capital-cn",
+      "query": "用一句话回答：中国的首都是哪里？",
+      "tags": ["ci", "smoke", "deepeval"],
+      "expected_chunks": [],
+      "expected_answer": "中国的首都是北京。"
+    }
+  ]
+}
