@@ -38,7 +38,7 @@ export class AgentLoop {
       if (this.options.forceDirectGeneration) {
         let sawDelta = false;
         const providerStartedAt = Date.now();
-        await onEvent?.({ type: "provider_request_start", turn: turns });
+        await onEvent?.({ type: "provider_request_start", turn: turns, messages: conversation });
         try {
           for await (const event of this.options.stream(conversation, this.options.signal)) {
             if (event.type === "delta") {
@@ -73,7 +73,7 @@ export class AgentLoop {
         break;
       }
       const providerStartedAt = Date.now();
-      await onEvent?.({ type: "provider_request_start", turn: turns });
+      await onEvent?.({ type: "provider_request_start", turn: turns, messages: conversation });
       try {
         for await (const event of this.options.stream(conversation, this.options.signal)) {
           if (event.type === "delta") {

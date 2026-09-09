@@ -100,7 +100,7 @@ export const TRACE_DEMO_PROMPT_GROUPS: TraceDemoPromptGroup[] = [
         id: 'realtime-search',
         title: '实时搜索',
         description: '展示 web_search 路由',
-        prompt: 'https://blog.csdn.net/weixin_59727843/article/details/163076988?spm=1001.2014.3001.5501分析这个文章,在找找其他的文章,补充一下',
+        prompt: '请先分析这篇文章：\nhttps://blog.csdn.net/weixin_59727843/article/details/163076988?spm=1001.2014.3001.5501\n\n然后再搜索其他相关文章进行补充，对比不同文章的观点，并注明来源。',
         tone: 'normal',
       },
     ],

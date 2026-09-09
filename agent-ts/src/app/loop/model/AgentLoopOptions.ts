@@ -36,7 +36,11 @@ export type AgentStreamFn = (
 export type AgentLoopEvent =
   | { type: "agent_start" }
   | { type: "turn_start"; turn: number }
-  | { type: "provider_request_start"; turn: number }
+  | {
+      type: "provider_request_start";
+      turn: number;
+      messages: ChatStreamRequest["messages"];
+    }
   | {
       type: "provider_request_end";
       turn: number;

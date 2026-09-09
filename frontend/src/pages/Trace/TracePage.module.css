@@ -612,6 +612,11 @@
   min-width: 0;
 }
 
+.contextRoundItem {
+  width: 100%;
+  min-width: 0;
+}
+
 .contextMessageContent {
   max-height: 180px;
   color: #526173;

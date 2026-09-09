@@ -40,10 +40,11 @@ import { preferRagOnly, shouldForceEducationRag } from "../../../../graph/helper
 import { buildExplorerContext } from "../../../../graph/helpers.js";
 import { AgentGraphRunner } from "../../../../graph/core/AgentGraphRunner.js";
 import type { GraphState, GraphExplorationState } from "../../../../graph/model/GraphState.js";
-import type { AgentLoopOptions } from "../../../loop/model/AgentLoopOptions.js";
+import type { AgentLoopEvent, AgentLoopOptions } from "../../../loop/model/AgentLoopOptions.js";
 import type { TaskPlan } from "../../../../planning/model/TaskPlan.js";
 import { shouldUseDirectPlan } from "../../../../planning/core/PlannedTools.js";
 import { StreamProgressReporter } from "../../../../protocol/events/stream/progress/StreamProgressReporter.js";
+import type { OpenAIChatMessage } from "../../../../openai/chat/model/message/OpenAIChatMessage.js";
 
 const MODEL_CONTEXT_TEXT_LIMIT = 12000;
 
@@ -68,12 +69,16 @@ function toPlanEventPayload(taskPlan: TaskPlan): JsonObject {
   };
 }
 
-function renderModelContext(messages: ChatStreamRequest["messages"]): string {
+function renderModelContext(messages: readonly OpenAIChatMessage[]): string {
   const text = messages
     .map((message, index) => {
       const role = message.role || "unknown";
       const content = message.content || "";
-      return `#${index + 1} ${role}\n${content}`;
+      const toolCalls = message.tool_calls?.length
+        ? `\n工具调用：${JSON.stringify(message.tool_calls)}`
+        : "";
+      const toolCallId = message.tool_call_id ? `\n工具调用 ID：${message.tool_call_id}` : "";
+      return `#${index + 1} ${role}${toolCallId}${toolCalls}\n${content}`;
     })
     .join("\n\n---\n\n");
   if (text.length <= MODEL_CONTEXT_TEXT_LIMIT) {
@@ -82,17 +87,25 @@ function renderModelContext(messages: ChatStreamRequest["messages"]): string {
   return `${text.slice(0, MODEL_CONTEXT_TEXT_LIMIT)}\n\n[上下文过长，已截断展示前 ${MODEL_CONTEXT_TEXT_LIMIT} 字符]`;
 }
 
-function toModelContextEventPayload(stage: string, messages: ChatStreamRequest["messages"]): JsonObject {
+function toModelContextEventPayload(stage: string, turn: number, messages: readonly OpenAIChatMessage[]): JsonObject {
   return {
     stage,
+    turn,
     message_count: messages.length,
     model_context_text: renderModelContext(messages),
     messages: messages.map((message, index) => ({
       index: index + 1,
       role: message.role,
-      content: message.content
-    }))
+      content: message.content,
+      ...(message.tool_call_id ? { tool_call_id: message.tool_call_id } : {}),
+      ...(message.tool_calls ? { tool_calls: message.tool_calls } : {})
+    })) as unknown as JsonObject[]
   };
+}
+
+function modelContextEventPayload(event: AgentLoopEvent): JsonObject | undefined {
+  if (event.type !== "provider_request_start") return undefined;
+  return toModelContextEventPayload("provider_request", event.turn, event.messages);
 }
 
 export class AgentChatStreamSession {
@@ -523,12 +536,16 @@ export class AgentChatStreamSession {
               maxTurns: 3,
               signal,
               writer: loopWriter,
-              onEvent: (_event) => {},
+              onEvent: async (event) => {
+                const payload = modelContextEventPayload(event);
+                if (payload) {
+                  await writer.write("sys_model_context", "system", payload);
+                }
+              },
               transformContext: (messages, loopSignal) => this.contextPipeline.transform(messages, loopSignal, route),
               toolPlan: taskPlan
             }
           );
-          await writer.write("sys_model_context", "system", toModelContextEventPayload("graph_generate", modelMessages));
           const loopResult = await loop.run();
           return {
             ...state,
@@ -579,14 +596,14 @@ export class AgentChatStreamSession {
           maxTurns: 3,
           signal,
           writer: (event) => eventWriter.write(event),
-          onEvent: (_event) => {},
+          onEvent: async (event) => {
+            const payload = modelContextEventPayload(event);
+            if (payload) {
+              await writer.write("sys_model_context", "system", payload);
+            }
+          },
           transformContext: (messages, loopSignal) => this.contextPipeline.transform(messages, loopSignal, route)
         }
-      );
-      await writer.write(
-        "sys_model_context",
-        "system",
-        toModelContextEventPayload("legacy_fallback", [...(state.modelMessages ?? state.messages)])
       );
       const loopResult = await loop.run();
       return loopResult.answer;
