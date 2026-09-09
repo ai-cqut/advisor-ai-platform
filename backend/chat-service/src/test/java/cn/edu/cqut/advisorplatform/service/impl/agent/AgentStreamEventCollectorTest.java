@@ -64,4 +64,30 @@ class AgentStreamEventCollectorTest {
     assertThat(deltaCount).isEqualTo(1);
     assertThat(events).isEmpty();
   }
+
+  @Test
+  void collect_shouldParseCamelCaseTraceIdAndTimestamp() {
+    StringBuilder buffer =
+        new StringBuilder(
+            """
+            event: sys_intent_route
+            data: {"source":"system","traceId":"t2","created_at":456,"payload":{"matched_by":"strong_rule"}}
+
+            """);
+    List<StreamEventRecord> events = new ArrayList<>();
+
+    collector.collect(
+        buffer,
+        new StringBuilder(),
+        new StringBuilder(),
+        new ArrayList<SourceReference>(),
+        events,
+        new AtomicBoolean(),
+        new AtomicBoolean());
+
+    assertThat(events).hasSize(1);
+    assertThat(events.get(0).getTraceId()).isEqualTo("t2");
+    assertThat(events.get(0).getTimestamp()).isEqualTo(456L);
+    assertThat(events.get(0).getPayload()).containsEntry("matched_by", "strong_rule");
+  }
 }

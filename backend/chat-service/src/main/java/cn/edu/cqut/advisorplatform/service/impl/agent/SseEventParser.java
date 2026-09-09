@@ -35,15 +35,27 @@ class SseEventParser {
       StreamEventRecord record = new StreamEventRecord();
       record.setEvent(eventName);
       record.setSource(node.path("source").asText(""));
-      record.setTraceId(node.path("trace_id").asText(""));
-      if (node.has("timestamp") && node.path("timestamp").canConvertToLong()) {
-        record.setTimestamp(node.path("timestamp").asLong());
+      record.setTraceId(firstText(node, "trace_id", "traceId"));
+      JsonNode timestampNode =
+          node.has("timestamp") ? node.path("timestamp") : node.path("created_at");
+      if (timestampNode.canConvertToLong()) {
+        record.setTimestamp(timestampNode.asLong());
       }
       record.setPayload(objectMapper.convertValue(payloadNode, STREAM_EVENT_PAYLOAD_TYPE));
       return record;
     } catch (Exception e) {
       return null;
     }
+  }
+
+  private String firstText(JsonNode node, String... fieldNames) {
+    for (String fieldName : fieldNames) {
+      JsonNode value = node.path(fieldName);
+      if (!value.isMissingNode() && !value.isNull() && !value.asText("").isBlank()) {
+        return value.asText();
+      }
+    }
+    return "";
   }
 
   String extractDelta(String sseBlock) {

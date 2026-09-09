@@ -3,6 +3,7 @@ package cn.edu.cqut.advisorplatform.service.trace;
 import cn.edu.cqut.advisorplatform.common.trace.TraceEvent;
 import cn.edu.cqut.advisorplatform.common.trace.TraceNodeStatus;
 import cn.edu.cqut.advisorplatform.entity.chat.StreamEventRecord;
+import cn.edu.cqut.advisorplatform.utils.LogTraceUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -81,10 +82,16 @@ public class TraceEventClient {
     if ("tool_result".equals(event) && isToolFailure(record)) {
       status = TraceNodeStatus.FAILED;
     }
+    String traceId = firstNonBlank(record.getTraceId(), LogTraceUtil.get(LogTraceUtil.TRACE_ID));
+    String turnId = firstNonBlank(LogTraceUtil.get(LogTraceUtil.TURN_ID));
+    if (traceId.isBlank()) {
+      log.debug("skip agent trace event without trace id, event={}", event);
+      return;
+    }
     send(
         new TraceEvent(
-            record.getTraceId(),
-            null,
+            traceId,
+            turnId,
             node,
             status,
             eventMessage(event, record),
@@ -92,6 +99,15 @@ public class TraceEventClient {
             null,
             "agent-ts",
             metadataFor(event, record.getPayload())));
+  }
+
+  private String firstNonBlank(String... values) {
+    for (String value : values) {
+      if (value != null && !value.isBlank()) {
+        return value;
+      }
+    }
+    return "";
   }
 
   private void send(TraceEvent event) {
