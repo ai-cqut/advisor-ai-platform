@@ -20,6 +20,13 @@ export const TRACE_DEMO_PROMPT_GROUPS: TraceDemoPromptGroup[] = [
     description: '先展示请求如何经过鉴权、路由、模型和持久化',
     prompts: [
       {
+        id: 'comprehensive',
+        title: '综合演示',
+        description: '一次串起核心能力',
+        prompt: '请完成一次辅导员综合工作分析：先查询当前系统中的前五名学生，识别一名需要重点关注的学生；再查询该学生最近的签到情况；然后根据知识库中的学生管理制度，给出辅导员跟进建议；最后整理成一份简洁的工作汇报，并说明本次调用了哪些工具、每个工具返回了什么结果。',
+        tone: 'tool',
+      },
+      {
         id: 'basic',
         title: '基础对话',
         description: '展示最小可用链路',
