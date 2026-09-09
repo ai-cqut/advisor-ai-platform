@@ -80,15 +80,28 @@ class SseEventParser {
     try {
       JsonNode node = objectMapper.readTree(block.dataJson());
       JsonNode payload = node.path("payload");
-      JsonNode items =
-          "tool_result".equals(block.eventName())
-              ? payload.path("derived").path("sources")
-              : payload.path("items");
-      if (items.isMissingNode()) {
-        items =
-            "tool_result".equals(block.eventName())
-                ? node.path("derived").path("sources")
-                : node.path("items");
+      JsonNode items = payload.path("derived").path("sources");
+      if (!items.isArray()) {
+        items = payload.path("items");
+      }
+      if (!items.isArray()) {
+        items = node.path("derived").path("sources");
+      }
+      if (!items.isArray()) {
+        items = node.path("items");
+      }
+      if (!items.isArray() && "tool_result".equals(block.eventName())) {
+        String toolOutput = payload.path("tool_output").asText("");
+        if (toolOutput.isBlank()) {
+          toolOutput = node.path("tool_output").asText("");
+        }
+        if (!toolOutput.isBlank()) {
+          JsonNode toolOutputNode = objectMapper.readTree(toolOutput);
+          items = toolOutputNode.path("derived").path("sources");
+          if (!items.isArray()) {
+            items = toolOutputNode.path("items");
+          }
+        }
       }
       if (!items.isArray()) {
         return List.of();
@@ -96,9 +109,12 @@ class SseEventParser {
       List<SourceReference> results = new ArrayList<>();
       for (JsonNode item : items) {
         SourceReference source = new SourceReference();
-        source.setDocumentId(item.path("id").isMissingNode() ? null : item.path("id").asLong());
+        JsonNode documentId = item.has("id") ? item.path("id") : item.path("documentId");
+        source.setDocumentId(
+            documentId.isMissingNode() || documentId.isNull() ? null : documentId.asLong());
         source.setDocName(item.path("docName").asText(""));
-        source.setSnippet(item.path("snippet").asText(""));
+        String snippet = item.path("snippet").asText("");
+        source.setSnippet(snippet.isBlank() ? item.path("content").asText("") : snippet);
         results.add(source);
       }
       return results;

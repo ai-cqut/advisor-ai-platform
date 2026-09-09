@@ -17,9 +17,16 @@ test("rag search tool result includes real chunk content", () => {
   const payload = JSON.parse(result.output);
   assert.equal(payload.status, "hit");
   assert.equal(payload.items[0].docName, "policy.pdf");
+  assert.equal(payload.items[0].id, 1);
   assert.equal(payload.items[0].snippet, "辅导员应具备思想理论教育能力。");
   assert.equal(payload.items[0].content, "辅导员应具备思想理论教育能力。");
   assert.equal(payload.items[0].score, 0.87);
+  assert.deepEqual(payload.derived.sources, [{
+    id: 1,
+    docName: "policy.pdf",
+    snippet: "辅导员应具备思想理论教育能力。",
+    score: 0.87
+  }]);
 });
 
 test("rag executor searches chunks through rag api client", async () => {

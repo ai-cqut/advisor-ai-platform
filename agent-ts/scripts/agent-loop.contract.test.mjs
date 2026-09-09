@@ -122,6 +122,37 @@ test("tool execution retries until success and records final attempt", async () 
   assert.equal(attemptsByTool.slow_b, 3);
 });
 
+test("planned tool steps execute before generation and emit completed tool events", async () => {
+  const events = [];
+  const calls = [];
+  const loop = new AgentLoop({
+    chatRequest: request,
+    maxTurns: 1,
+    toolPlan: {
+      mode: "plan_and_execute",
+      steps: [{ action: "call_tool", tool_name: "rag_search", arguments: { query: "辅导员能力" } }]
+    },
+    stream: streamWithoutTools,
+    executeTool: async (_request, toolName, args) => {
+      calls.push({ toolName, args });
+      return {
+        output: JSON.stringify({
+          ok: true,
+          status: "hit",
+          derived: { sources: [{ id: 1, docName: "policy.pdf", snippet: "证据" }] }
+        }),
+        success: true
+      };
+    },
+    writer: async (event) => events.push(event)
+  });
+
+  await loop.run();
+  assert.deepEqual(calls, [{ toolName: "rag_search", args: { query: "辅导员能力" } }]);
+  assert.deepEqual(events.map((event) => event.type), ["tool_call", "tool_result", "delta"]);
+  assert.equal(events[1].success, true);
+});
+
 test("safety filters redact PII and secrets across stream chunk boundaries", () => {
   const filter = new RegexSafetyFilter();
   assert.equal(filter.redact("联系 13812345678 或 test@example.com"), "联系 [MASK:PHONE] 或 [MASK:EMAIL]");

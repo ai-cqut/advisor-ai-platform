@@ -33,4 +33,29 @@ describe('chatStreamEvents', () => {
       category: 'prompt_injection',
     })
   })
+
+  it('dispatches derived RAG sources from tool results', () => {
+    const handlers: StreamHandlers = {
+      onSources: vi.fn(),
+    }
+
+    dispatchStreamEvent(
+      'tool_result',
+      {
+        tool_name: 'rag_search',
+        status: 'hit',
+        derived: {
+          sources: [{ id: 1, docName: 'policy.pdf', snippet: '原文片段', score: 0.9 }],
+        },
+      },
+      handlers,
+      vi.fn(),
+    )
+
+    expect(handlers.onSources).toHaveBeenCalledWith(
+      [{ id: 1, docName: 'policy.pdf', snippet: '原文片段', score: 0.9 }],
+      'hit',
+      undefined,
+    )
+  })
 })

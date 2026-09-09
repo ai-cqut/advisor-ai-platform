@@ -31,13 +31,27 @@ export class AgentStreamEventEmitter {
     attempt: number,
     success: boolean
   ): Promise<void> {
+    const parsedOutput = this.parseToolOutput(toolOutput);
     await this.writer.write("tool_result", "tool", {
       tool_call_id: toolCallId,
       tool_name: toolName,
       tool_args: toolArgs,
       tool_output: toolOutput,
       attempt,
-      success
+      success,
+      ...(parsedOutput ?? {})
     });
+  }
+
+  private parseToolOutput(toolOutput: string): JsonObject | undefined {
+    try {
+      const parsed = JSON.parse(toolOutput) as unknown;
+      if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+        return undefined;
+      }
+      return parsed as JsonObject;
+    } catch {
+      return undefined;
+    }
   }
 }

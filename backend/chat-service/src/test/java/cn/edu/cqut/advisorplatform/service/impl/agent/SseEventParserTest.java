@@ -41,6 +41,22 @@ class SseEventParserTest {
   }
 
   @Test
+  void extractSources_shouldReadSourcesFromSerializedToolOutput() {
+    String block =
+        """
+        event: tool_result
+        data: {"payload":{"tool_output":"{\\"items\\":[{\\"documentId\\":8,\\"docName\\":\\"policy.pdf\\",\\"content\\":\\"原文片段\\"}]}"}}}
+        """;
+
+    List<SourceReference> sources = parser.extractSources(block);
+
+    assertThat(sources).hasSize(1);
+    assertThat(sources.get(0).getDocumentId()).isEqualTo(8L);
+    assertThat(sources.get(0).getDocName()).isEqualTo("policy.pdf");
+    assertThat(sources.get(0).getSnippet()).isEqualTo("原文片段");
+  }
+
+  @Test
   void extractStreamEventRecord_shouldUnwrapPayloadAndKeepTraceMetadata() {
     String block =
         """
