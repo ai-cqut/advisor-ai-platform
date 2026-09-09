@@ -107,7 +107,7 @@ export class AgentLoopFactory {
     const transformContext = async (messages: ChatStreamRequest["messages"], signal?: AbortSignal) =>
       factory.contextPipeline.transform(messages, signal);
     const plannedSteps = plannedToolSteps(options?.toolPlan);
-    const forceDirectGeneration = Boolean(options?.forceDirectGeneration || plannedSteps.length > 0);
+    const forceDirectGeneration = Boolean(options?.forceDirectGeneration);
     const mergedTransformContext = async (messages: ChatStreamRequest["messages"], signal?: AbortSignal) => {
       const transformed = await transformContext(messages, signal);
       if (plannedSteps.length === 0) {
