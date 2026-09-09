@@ -207,11 +207,11 @@ async function runSmoke(baseUrl, authBaseUrl) {
   const row = (sessions.json?.data ?? []).find((x) => x.id === sessionId);
   if (!row) throw new Error('session not found in list');
 
-  log('non-stream send with fake kbId=999');
+  log('non-stream send without knowledge base');
   const send = await fetchJson(`${baseUrl}/api/chat/sessions/${sessionId}/messages`, {
     method: 'POST',
     headers: auth,
-    body: JSON.stringify({ content: 'smoke non-stream: reply OK', kbId: '999' }),
+    body: JSON.stringify({ content: 'smoke non-stream: reply OK' }),
   });
   if (!send.res.ok) throw new Error(`send failed: ${send.res.status}`);
 
@@ -228,7 +228,6 @@ async function runSmoke(baseUrl, authBaseUrl) {
   const out = {
     username,
     sessionId,
-    sessionKbId: row.kbId,
     nonStreamRole: send.json?.data?.role,
     streamHasDone: stream.hasDone,
     streamHasDelta: stream.hasDelta,
@@ -237,7 +236,6 @@ async function runSmoke(baseUrl, authBaseUrl) {
     messageCount: (msgs.json?.data ?? []).length,
   };
 
-  if (out.sessionKbId !== 0) throw new Error(`expected kbId=0, got ${out.sessionKbId}`);
   if (!out.streamHasDone) throw new Error('expected done event, got none');
   if (out.messageCount < 2) throw new Error(`expected >=2 messages, got ${out.messageCount}`);
 
@@ -257,7 +255,6 @@ async function streamSendWithRetry(baseUrl, token, sessionId, attempts = 3) {
         },
         body: JSON.stringify({
           sessionId,
-          kbId: 999,
           messages: [{ role: 'user', content: 'smoke stream: reply stream ok' }],
         }),
       });
@@ -471,7 +468,6 @@ async function runAgentAuthDrill(agentBaseUrl) {
     messages: [{ role: 'user', content: 'auth drill' }],
     userId: 1,
     sessionId: 1001,
-    kbId: 1,
   };
   const res = await fetch(`${agentBaseUrl}/chat/stream`, {
     method: 'POST',

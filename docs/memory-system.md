@@ -99,7 +99,7 @@ class MemoryDecision:
 public class UserMemoryDO {
     private Long id;
     private Long userId;
-    private Long kbId;
+    private Long knowledgeBaseId;
     private String content;
     private BigDecimal confidence;
     private BigDecimal score;
@@ -296,7 +296,7 @@ def _render_core_memories(memories, max_tokens=500):
 POST /api/memory/long-term/search
 {
   "userId": 1,
-  "kbId": 1,
+  "knowledgeBaseId": 1,
   "query": "用户偏好",
   "topK": 6,
   "mode": "hybrid",
@@ -307,7 +307,7 @@ POST /api/memory/long-term/search
 ### 6.2 核心记忆加载
 
 ```
-GET /api/memory/long-term/core?userId=1&kbId=1
+GET /api/memory/long-term/core?userId=1&knowledgeBaseId=1
 ```
 
 ### 6.3 记忆写入
@@ -316,7 +316,7 @@ GET /api/memory/long-term/core?userId=1&kbId=1
 POST /api/memory/long-term/candidates
 {
   "userId": 1,
-  "kbId": 1,
+  "knowledgeBaseId": 1,
   "candidates": [
     {
       "content": "用户喜欢 Python",

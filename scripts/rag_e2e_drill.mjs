@@ -83,9 +83,9 @@ async function main() {
   if (!kb.res.ok) {
     throw new Error(`create kb failed: ${kb.res.status} ${kb.text}`);
   }
-  const kbId = kb.json?.data?.id;
-  if (!kbId) {
-    throw new Error('create kb failed: missing kbId');
+  const knowledgeBaseId = kb.json?.data?.id;
+  if (!knowledgeBaseId) {
+    throw new Error('create knowledge base failed: missing knowledgeBaseId');
   }
 
   log('list knowledge bases');
@@ -101,7 +101,7 @@ async function main() {
   const form = new FormData();
   form.append('file', new Blob([text], { type: 'text/plain' }), 'rag-e2e.txt');
   log('upload document');
-  const upload = await fetchText(`${baseUrl}/api/rag/knowledge-bases/${kbId}/documents`, {
+  const upload = await fetchText(`${baseUrl}/api/rag/knowledge-bases/${knowledgeBaseId}/documents`, {
     method: 'POST',
     headers: auth,
     body: form,
@@ -115,7 +115,7 @@ async function main() {
   }
 
   log('list documents');
-  const docs = await fetchText(`${baseUrl}/api/rag/knowledge-bases/${kbId}/documents`, {
+  const docs = await fetchText(`${baseUrl}/api/rag/knowledge-bases/${knowledgeBaseId}/documents`, {
     method: 'GET',
     headers: auth,
   });
@@ -133,7 +133,7 @@ async function main() {
   }
 
   log('delete knowledge base');
-  const delKb = await fetchText(`${baseUrl}/api/rag/knowledge-bases/${kbId}`, {
+  const delKb = await fetchText(`${baseUrl}/api/rag/knowledge-bases/${knowledgeBaseId}`, {
     method: 'DELETE',
     headers: auth,
   });
@@ -146,7 +146,7 @@ async function main() {
       {
         ok: true,
         username,
-        kbId,
+        knowledgeBaseId,
         docId,
         kbCount: Array.isArray(kbList.json?.data) ? kbList.json.data.length : 0,
         docCount: Array.isArray(docs.json?.data) ? docs.json.data.length : 0,
@@ -161,4 +161,3 @@ main().catch((err) => {
   console.error(JSON.stringify({ ok: false, error: err.message }, null, 2));
   process.exit(1);
 });
-
