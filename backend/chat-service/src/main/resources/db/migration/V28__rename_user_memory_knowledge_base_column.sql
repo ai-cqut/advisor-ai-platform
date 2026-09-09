@@ -1,0 +1,21 @@
+-- Align the user memory schema with the knowledgeBaseId entity property.
+
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'user_memory'
+          AND column_name = 'kb_id'
+    ) AND NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'user_memory'
+          AND column_name = 'knowledge_base_id'
+    ) THEN
+        ALTER TABLE user_memory RENAME COLUMN kb_id TO knowledge_base_id;
+    END IF;
+END
+$$;
