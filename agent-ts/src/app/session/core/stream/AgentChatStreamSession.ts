@@ -45,6 +45,8 @@ import type { TaskPlan } from "../../../../planning/model/TaskPlan.js";
 import { shouldUseDirectPlan } from "../../../../planning/core/PlannedTools.js";
 import { StreamProgressReporter } from "../../../../protocol/events/stream/progress/StreamProgressReporter.js";
 
+const MODEL_CONTEXT_TEXT_LIMIT = 12000;
+
 function toPlanEventPayload(taskPlan: TaskPlan): JsonObject {
   return {
     mode: taskPlan.mode,
@@ -62,6 +64,33 @@ function toPlanEventPayload(taskPlan: TaskPlan): JsonObject {
       reason: step.reason,
       ...(step.expectedOutcome ? { expected_outcome: step.expectedOutcome } : {}),
       sufficient: step.sufficient
+    }))
+  };
+}
+
+function renderModelContext(messages: ChatStreamRequest["messages"]): string {
+  const text = messages
+    .map((message, index) => {
+      const role = message.role || "unknown";
+      const content = message.content || "";
+      return `#${index + 1} ${role}\n${content}`;
+    })
+    .join("\n\n---\n\n");
+  if (text.length <= MODEL_CONTEXT_TEXT_LIMIT) {
+    return text;
+  }
+  return `${text.slice(0, MODEL_CONTEXT_TEXT_LIMIT)}\n\n[上下文过长，已截断展示前 ${MODEL_CONTEXT_TEXT_LIMIT} 字符]`;
+}
+
+function toModelContextEventPayload(stage: string, messages: ChatStreamRequest["messages"]): JsonObject {
+  return {
+    stage,
+    message_count: messages.length,
+    model_context_text: renderModelContext(messages),
+    messages: messages.map((message, index) => ({
+      index: index + 1,
+      role: message.role,
+      content: message.content
     }))
   };
 }
@@ -273,6 +302,7 @@ export class AgentChatStreamSession {
           route,
           safeChatRequest,
           eventWriter,
+          streamWriter,
           streamWriter.signal
         );
       }
@@ -498,6 +528,7 @@ export class AgentChatStreamSession {
               toolPlan: taskPlan
             }
           );
+          await writer.write("sys_model_context", "system", toModelContextEventPayload("graph_generate", modelMessages));
           const loopResult = await loop.run();
           return {
             ...state,
@@ -532,7 +563,8 @@ export class AgentChatStreamSession {
     route: ReturnType<IntentRouter["route"]>,
     chatRequest: ChatStreamRequest,
     eventWriter: AgentStreamEventWriter,
-      signal?: AbortSignal
+    writer: SseWriter,
+    signal?: AbortSignal
   ): Promise<string> {
     try {
       const loop = new AgentLoopFactory(
@@ -550,6 +582,11 @@ export class AgentChatStreamSession {
           onEvent: (_event) => {},
           transformContext: (messages, loopSignal) => this.contextPipeline.transform(messages, loopSignal, route)
         }
+      );
+      await writer.write(
+        "sys_model_context",
+        "system",
+        toModelContextEventPayload("legacy_fallback", [...(state.modelMessages ?? state.messages)])
       );
       const loopResult = await loop.run();
       return loopResult.answer;

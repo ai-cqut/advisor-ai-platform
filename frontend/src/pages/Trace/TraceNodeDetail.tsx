@@ -74,6 +74,54 @@ function toolStatus(execution: ToolExecution): 'STARTED' | 'SUCCESS' | 'FAILED' 
   return 'STARTED'
 }
 
+function modelContextEvent(events: TraceEvent[]): TraceEvent | undefined {
+  return [...events]
+    .reverse()
+    .find((item) => item.node === 'agent.reasoning' && item.metadata?.event === 'sys_model_context')
+}
+
+function ModelContextDetails({ event }: { event?: TraceEvent }) {
+  const metadata = asRecord(event?.metadata)
+  const messages = Array.isArray(metadata.messages) ? metadata.messages.map(asRecord) : []
+
+  return (
+    <section className={styles.detailSection}>
+      <div className={styles.toolSummaryHeader}>
+        <Typography.Text strong>发给模型的上下文原文</Typography.Text>
+        <Tag color={event ? 'green' : 'default'}>{event ? `${textValue(metadata.message_count, String(messages.length))} 条消息` : '未生成'}</Tag>
+      </div>
+      {event ? (
+        <>
+          <Descriptions className={styles.detailDescription} column={1} size="small">
+            <Descriptions.Item label="组装阶段">{textValue(metadata.stage)}</Descriptions.Item>
+            <Descriptions.Item label="事件时间">{new Date(event.timestamp).toLocaleString()}</Descriptions.Item>
+          </Descriptions>
+          <pre className={styles.modelContextBlock}>{textValue(metadata.model_context_text)}</pre>
+          <List
+            className={styles.toolExecutionList}
+            size="small"
+            header="上下文消息列表"
+            dataSource={messages}
+            locale={{ emptyText: '暂无上下文消息' }}
+            renderItem={(message) => (
+              <List.Item>
+                <div className={styles.contextMessageItem}>
+                  <div className={styles.toolExecutionHeader}>
+                    <strong>#{textValue(message.index)} {textValue(message.role, 'unknown')}</strong>
+                  </div>
+                  <pre className={styles.contextMessageContent}>{textValue(message.content)}</pre>
+                </div>
+              </List.Item>
+            )}
+          />
+        </>
+      ) : (
+        <Typography.Text type="secondary">当前链路还没有收到模型上下文事件。</Typography.Text>
+      )}
+    </section>
+  )
+}
+
 function ToolExecutionDetails({ executions }: { executions: ToolExecution[] }) {
   return (
     <section className={styles.detailSection}>
@@ -217,16 +265,20 @@ function StructuredEventDetails({
   }
 
   if (nodeId === 'agent.reasoning') {
+    const contextEvent = modelContextEvent(events)
     return (
-      <section className={styles.detailSection}>
-        <Typography.Text strong>Agent / Subagent 摘要</Typography.Text>
-        <Descriptions className={styles.detailDescription} column={1} size="small">
-          <Descriptions.Item label="Agent 名称">{textValue(metadata.agent_name)}</Descriptions.Item>
-          <Descriptions.Item label="阶段">{textValue(metadata.stage)}</Descriptions.Item>
-          <Descriptions.Item label="模式">{textValue(metadata.mode)}</Descriptions.Item>
-          <Descriptions.Item label="说明">{textValue(metadata.message)}</Descriptions.Item>
-        </Descriptions>
-      </section>
+      <>
+        <section className={styles.detailSection}>
+          <Typography.Text strong>Agent / Subagent 摘要</Typography.Text>
+          <Descriptions className={styles.detailDescription} column={1} size="small">
+            <Descriptions.Item label="Agent 名称">{textValue(metadata.agent_name)}</Descriptions.Item>
+            <Descriptions.Item label="阶段">{textValue(metadata.stage)}</Descriptions.Item>
+            <Descriptions.Item label="模式">{textValue(metadata.mode)}</Descriptions.Item>
+            <Descriptions.Item label="说明">{textValue(metadata.message)}</Descriptions.Item>
+          </Descriptions>
+        </section>
+        <ModelContextDetails event={contextEvent} />
+      </>
     )
   }
 

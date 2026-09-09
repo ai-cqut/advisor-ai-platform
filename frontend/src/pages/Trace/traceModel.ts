@@ -30,11 +30,11 @@ export const TRACE_NODES: TraceNodeDefinition[] = [
   },
   {
     id: 'agent.request',
-    title: 'Agent 编排',
-    subtitle: 'AI 请求代理',
+    title: 'Chat 调用 Agent',
+    subtitle: '请求转发 / 流式代理',
     group: 'Agent',
     service: 'Chat Service',
-    description: '将聊天请求转发给 Agent Runtime，并把 Agent 流式结果回写给前端。',
+    description: 'Chat Service 将本轮会话、用户身份、traceId 转发给 Agent Runtime，并把 Agent 流式结果回写给前端。',
     topologyGroup: 'chat',
   },
   {

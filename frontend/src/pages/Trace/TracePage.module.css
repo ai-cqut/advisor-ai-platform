@@ -590,6 +590,33 @@
   word-break: break-word;
 }
 
+.modelContextBlock,
+.contextMessageContent {
+  margin: 10px 0 0;
+  overflow: auto;
+  padding: 10px;
+  background: #f5f7fa;
+  color: #28364a;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.modelContextBlock {
+  max-height: 360px;
+}
+
+.contextMessageItem {
+  width: 100%;
+  min-width: 0;
+}
+
+.contextMessageContent {
+  max-height: 180px;
+  color: #526173;
+}
+
 .detailDescription {
   margin-top: 10px;
 }

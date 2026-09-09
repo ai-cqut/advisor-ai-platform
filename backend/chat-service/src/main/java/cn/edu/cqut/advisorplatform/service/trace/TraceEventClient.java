@@ -147,7 +147,7 @@ public class TraceEventClient {
       case "sys_intent_route" -> "agent.intent.route";
       case "sys_tool_plan" -> "agent.task.plan";
       case "tool_call", "tool_use", "tool_result", "tool_error" -> "tool.execute";
-      case "sys_reasoning" -> "agent.reasoning";
+      case "sys_reasoning", "sys_model_context" -> "agent.reasoning";
       case "llm_delta", "llm_data", "sys_done" -> "llm.stream";
       default -> null;
     };
@@ -160,6 +160,9 @@ public class TraceEventClient {
     }
     if ("sys_tool_plan".equals(event)) {
       return "任务规划：" + valueOrDefault(payload, "summary", "已生成执行计划");
+    }
+    if ("sys_model_context".equals(event)) {
+      return "模型上下文已组装：" + valueOrDefault(payload, "message_count", "0") + " 条消息";
     }
     Object toolName = payload == null ? null : payload.get("tool_name");
     if (toolName != null) {
