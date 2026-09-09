@@ -3,7 +3,12 @@ import { formatDuration, statusLabel } from './traceModel'
 import type { TraceEvent } from './traceTypes'
 import styles from './TracePage.module.css'
 
-export function TraceEventTimeline({ events }: { events: TraceEvent[] }) {
+interface TraceEventTimelineProps {
+  events: TraceEvent[]
+  onSelect?: (event: TraceEvent) => void
+}
+
+export function TraceEventTimeline({ events, onSelect }: TraceEventTimelineProps) {
   if (events.length === 0) {
     return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="发送请求后，这里会实时出现链路事件" />
   }
@@ -11,7 +16,7 @@ export function TraceEventTimeline({ events }: { events: TraceEvent[] }) {
   return (
     <div className={styles.timeline}>
       {[...events].reverse().map((event, index) => (
-        <div className={styles.timelineItem} key={`${event.node}-${event.timestamp}-${index}`}>
+        <button type="button" className={styles.timelineItem} key={`${event.node}-${event.timestamp}-${index}`} onClick={() => onSelect?.(event)}>
           <div className={styles.timelineDot} />
           <div className={styles.timelineContent}>
             <div className={styles.timelineHeader}>
@@ -22,7 +27,7 @@ export function TraceEventTimeline({ events }: { events: TraceEvent[] }) {
             <div className={styles.timelineMessage}>{event.message ?? '事件已收到'}</div>
             <div className={styles.timelineSource}>{event.source ?? 'unknown'} · {new Date(event.timestamp).toLocaleTimeString()}</div>
           </div>
-        </div>
+        </button>
       ))}
     </div>
   )

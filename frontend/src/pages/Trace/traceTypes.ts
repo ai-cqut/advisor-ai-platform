@@ -17,4 +17,7 @@ export interface TraceNodeDefinition {
   title: string
   subtitle: string
   group: string
+  service: string
+  description: string
+  topologyGroup: string
 }

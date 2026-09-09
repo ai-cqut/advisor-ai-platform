@@ -1,26 +1,50 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Button, Input, Space, Tag, Typography, message } from 'antd'
-import { PlayCircleOutlined, StopOutlined } from '@ant-design/icons'
+import { App, Button, Drawer, Input, Segmented, Space, Statistic, Tag, Typography } from 'antd'
+import {
+  BranchesOutlined,
+  ClearOutlined,
+  CopyOutlined,
+  PauseOutlined,
+  PlayCircleOutlined,
+  ReloadOutlined,
+  StopOutlined,
+} from '@ant-design/icons'
 import { chatApi } from '../../api/chatApi'
 import { streamChat } from '../../api/chatStreamClient'
 import { subscribeTrace } from './traceApi'
-import { latestEventForNode, TRACE_NODES } from './traceModel'
+import {
+  definitionForNode,
+  latestEventForNode,
+  TRACE_NODES,
+  TRACE_TOPOLOGY_EDGES,
+  TRACE_TOPOLOGY_NODES,
+} from './traceModel'
 import type { TraceEvent } from './traceTypes'
 import { TraceEventTimeline } from './TraceEventTimeline'
 import { TraceNodeCard } from './TraceNodeCard'
+import { TraceNodeDetail } from './TraceNodeDetail'
 import styles from './TracePage.module.css'
 
 const { TextArea } = Input
 
 export default function TracePage() {
+  const { message: messageApi } = App.useApp()
   const [question, setQuestion] = useState('请介绍一下这个平台的 AI 对话链路')
   const [traceId, setTraceId] = useState('')
   const [events, setEvents] = useState<TraceEvent[]>([])
   const [answer, setAnswer] = useState('')
   const [running, setRunning] = useState(false)
+  const [paused, setPaused] = useState(false)
+  const [pendingCount, setPendingCount] = useState(0)
+  const [viewMode, setViewMode] = useState<'flow' | 'topology'>('flow')
+  const [selectedNodeId, setSelectedNodeId] = useState<string>()
+  const [startedAt, setStartedAt] = useState<number>()
+  const [elapsedMs, setElapsedMs] = useState(0)
   const eventSourceRef = useRef<EventSource | null>(null)
   const stopTimerRef = useRef<number | null>(null)
   const traceCompletedRef = useRef(false)
+  const pausedRef = useRef(false)
+  const pendingEventsRef = useRef<TraceEvent[]>([])
 
   useEffect(
     () => () => {
@@ -31,6 +55,16 @@ export default function TracePage() {
     },
     [],
   )
+
+  useEffect(() => {
+    pausedRef.current = paused
+  }, [paused])
+
+  useEffect(() => {
+    if (!running || !startedAt) return undefined
+    const timer = window.setInterval(() => setElapsedMs(Date.now() - startedAt), 200)
+    return () => window.clearInterval(timer)
+  }, [running, startedAt])
 
   const currentNode = useMemo(
     () => {
@@ -50,6 +84,20 @@ export default function TracePage() {
     setRunning(false)
   }
 
+  const clearTrace = () => {
+    stop()
+    setTraceId('')
+    setEvents([])
+    setAnswer('')
+    setPaused(false)
+    pausedRef.current = false
+    pendingEventsRef.current = []
+    setPendingCount(0)
+    setSelectedNodeId(undefined)
+    setStartedAt(undefined)
+    setElapsedMs(0)
+  }
+
   const scheduleStop = (delayMs: number) => {
     if (stopTimerRef.current !== null) {
       window.clearTimeout(stopTimerRef.current)
@@ -57,19 +105,56 @@ export default function TracePage() {
     stopTimerRef.current = window.setTimeout(stop, delayMs)
   }
 
+  const appendEvent = (event: TraceEvent) => {
+    if (pausedRef.current) {
+      pendingEventsRef.current.push(event)
+      setPendingCount(pendingEventsRef.current.length)
+      return
+    }
+    setEvents((previous) => [...previous, event])
+  }
+
+  const resumeDisplay = () => {
+    setPaused(false)
+    pausedRef.current = false
+    if (pendingEventsRef.current.length > 0) {
+      setEvents((previous) => [...previous, ...pendingEventsRef.current])
+      pendingEventsRef.current = []
+      setPendingCount(0)
+    }
+  }
+
+  const copyTraceId = async () => {
+    if (!traceId) return
+    await navigator.clipboard.writeText(traceId)
+    messageApi.success('Trace ID 已复制')
+  }
+
+  const selectNode = (nodeId: string) => {
+    setSelectedNodeId(nodeId)
+  }
+
   const runTrace = async () => {
     if (!question.trim() || running) return
     setRunning(true)
     setAnswer('')
     setEvents([])
+    setPaused(false)
+    pausedRef.current = false
+    pendingEventsRef.current = []
+    setPendingCount(0)
+    setSelectedNodeId(undefined)
+    const requestStartedAt = Date.now()
+    setStartedAt(requestStartedAt)
+    setElapsedMs(0)
     const nextTraceId = crypto.randomUUID()
     setTraceId(nextTraceId)
     traceCompletedRef.current = false
 
     eventSourceRef.current = subscribeTrace(
       nextTraceId,
-      (event) => setEvents((previous) => [...previous, event]),
-      () => message.error('链路事件订阅失败'),
+      appendEvent,
+      () => messageApi.error('链路事件订阅失败'),
       () => {
         traceCompletedRef.current = true
         scheduleStop(300)
@@ -87,16 +172,28 @@ export default function TracePage() {
         },
         {
           onDelta: (chunk) => setAnswer((previous) => previous + chunk),
-          onError: (error) => message.error(error),
+          onError: (error) => messageApi.error(error),
         },
       )
     } catch (error) {
-      message.error(error instanceof Error ? error.message : '链路请求失败')
+      messageApi.error(error instanceof Error ? error.message : '链路请求失败')
     } finally {
       if (!traceCompletedRef.current) {
         scheduleStop(10_000)
       }
     }
+  }
+
+  const selectedDefinition = selectedNodeId ? definitionForNode(selectedNodeId) : undefined
+  const selectedEvent = selectedNodeId ? latestEventForNode(events, selectedNodeId) : undefined
+  const receivedEventCount = events.length + pendingCount
+  const successCount = events.filter((event) => event.status === 'SUCCESS').length
+  const failedCount = events.filter((event) => event.status === 'FAILED').length
+  const executedNodeCount = new Set(events.map((event) => event.node)).size
+
+  const topologyEventFor = (topologyGroup: string) => {
+    const nodeIds = TRACE_NODES.filter((node) => node.topologyGroup === topologyGroup).map((node) => node.id)
+    return [...events].reverse().find((event) => nodeIds.includes(event.node))
   }
 
   return (
@@ -127,11 +224,48 @@ export default function TracePage() {
           <Button type="primary" icon={<PlayCircleOutlined />} loading={running} onClick={() => void runTrace()}>
             发送真实请求
           </Button>
+          <Button icon={<ReloadOutlined />} disabled={running} onClick={() => void runTrace()}>
+            重新执行
+          </Button>
+          <Button
+            icon={paused ? <PlayCircleOutlined /> : <PauseOutlined />}
+            disabled={!running && pendingCount === 0}
+            onClick={() => (paused ? resumeDisplay() : (pausedRef.current = true, setPaused(true)))}
+          >
+            {paused ? '继续展示' : '暂停展示'}
+          </Button>
           <Button icon={<StopOutlined />} disabled={!running} onClick={stop}>
             停止监听
           </Button>
+          <Button icon={<ClearOutlined />} disabled={!traceId && events.length === 0} onClick={clearTrace}>
+            清空链路
+          </Button>
           {currentNode && <Tag color="blue">当前节点：{currentNode}</Tag>}
         </Space>
+        <div className={styles.controlFooter}>
+          <Space wrap>
+            <Button size="small" icon={<CopyOutlined />} disabled={!traceId} onClick={() => void copyTraceId()}>
+              复制 Trace ID
+            </Button>
+            {paused && <Tag color="gold">{pendingCount} 个事件待展示</Tag>}
+          </Space>
+          <Segmented
+            value={viewMode}
+            onChange={(value) => setViewMode(value as 'flow' | 'topology')}
+            options={[
+              { value: 'flow', label: '流程视图', icon: <PlayCircleOutlined /> },
+              { value: 'topology', label: '服务拓扑', icon: <BranchesOutlined /> },
+            ]}
+          />
+        </div>
+      </section>
+
+      <section className={styles.statsGrid}>
+        <Statistic title="链路耗时" value={elapsedMs} suffix="ms" />
+        <Statistic title="事件总数" value={receivedEventCount} />
+        <Statistic title="成功事件" value={successCount} valueStyle={{ color: '#389e0d' }} />
+        <Statistic title="失败事件" value={failedCount} valueStyle={{ color: '#cf1322' }} />
+        <Statistic title="已执行节点" value={executedNodeCount} suffix={`/ ${TRACE_NODES.length}`} />
       </section>
 
       <div className={styles.contentGrid}>
@@ -141,22 +275,58 @@ export default function TracePage() {
               <Typography.Title level={4}>请求执行路径</Typography.Title>
               <Typography.Text type="secondary">节点状态和耗时来自同一次真实请求</Typography.Text>
             </div>
-            <Tag>{events.length} 个事件</Tag>
+            <Tag>{receivedEventCount} 个事件</Tag>
           </div>
-          <div className={styles.flow}>
-            {TRACE_NODES.map((definition, index) => (
-              <div key={definition.id}>
-                <TraceNodeCard definition={definition} event={latestEventForNode(events, definition.id)} />
-                {index < TRACE_NODES.length - 1 && <div className={styles.connector} />}
+          {viewMode === 'flow' ? (
+            <div className={styles.flow}>
+              {TRACE_NODES.map((definition, index) => (
+                <div key={definition.id}>
+                  <TraceNodeCard
+                    definition={definition}
+                    event={latestEventForNode(events, definition.id)}
+                    selected={selectedNodeId === definition.id}
+                    onClick={() => selectNode(definition.id)}
+                  />
+                  {index < TRACE_NODES.length - 1 && <div className={styles.connector} />}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className={styles.topology}>
+              {TRACE_TOPOLOGY_NODES.map((node) => {
+                const event = topologyEventFor(node.id)
+                const selected = event?.node === selectedNodeId
+                return (
+                  <button
+                    type="button"
+                    className={`${styles.topologyNode} ${selected ? styles.topologyNodeSelected : ''}`}
+                    key={node.id}
+                    onClick={() => event && selectNode(event.node)}
+                  >
+                    <span className={styles.topologyKicker}>{node.id.toUpperCase()}</span>
+                    <strong>{node.title}</strong>
+                    <span>{node.subtitle}</span>
+                    <Tag color={event?.status === 'FAILED' ? 'red' : event ? 'green' : 'default'}>
+                      {event ? event.status : 'WAITING'}
+                    </Tag>
+                  </button>
+                )
+              })}
+              <div className={styles.topologyEdges}>
+                {TRACE_TOPOLOGY_EDGES.map(([from, to]) => (
+                  <span key={`${from}-${to}`} className={styles.topologyEdge}>
+                    {from} <span>→</span> {to}
+                  </span>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </section>
 
         <aside className={styles.sideColumn}>
           <section className={styles.panel}>
             <Typography.Title level={4}>事件时间线</Typography.Title>
-            <TraceEventTimeline events={events} />
+            <TraceEventTimeline events={events} onSelect={(event) => selectNode(event.node)} />
           </section>
           <section className={`${styles.panel} ${styles.answerPanel}`}>
             <Typography.Title level={4}>AI 实时回答</Typography.Title>
@@ -164,6 +334,14 @@ export default function TracePage() {
           </section>
         </aside>
       </div>
+      <Drawer
+        title={selectedDefinition?.title ?? '节点详情'}
+        open={Boolean(selectedNodeId)}
+        onClose={() => setSelectedNodeId(undefined)}
+        width={460}
+      >
+        <TraceNodeDetail definition={selectedDefinition} event={selectedEvent} events={events} />
+      </Drawer>
     </div>
   )
 }

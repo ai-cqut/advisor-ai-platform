@@ -7,9 +7,11 @@ import styles from './TracePage.module.css'
 interface TraceNodeCardProps {
   definition: TraceNodeDefinition
   event?: TraceEvent
+  selected?: boolean
+  onClick?: () => void
 }
 
-export function TraceNodeCard({ definition, event }: TraceNodeCardProps) {
+export function TraceNodeCard({ definition, event, selected, onClick }: TraceNodeCardProps) {
   const status = event?.status ?? 'WAITING'
   const icon = {
     STARTED: <LoadingOutlined spin />,
@@ -20,7 +22,7 @@ export function TraceNodeCard({ definition, event }: TraceNodeCardProps) {
   }[status]
 
   return (
-    <div className={`${styles.node} ${styles[`node${status}`]}`}>
+    <button type="button" className={`${styles.node} ${styles[`node${status}`]} ${selected ? styles.nodeSelected : ''}`} onClick={onClick}>
       <div className={styles.nodeIcon}>{icon}</div>
       <div className={styles.nodeBody}>
         <div className={styles.nodeTitle}>{definition.title}</div>
@@ -33,6 +35,6 @@ export function TraceNodeCard({ definition, event }: TraceNodeCardProps) {
         </Tag>
         <span>{formatDuration(event?.durationMs)}</span>
       </div>
-    </div>
+    </button>
   )
 }
