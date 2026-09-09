@@ -87,8 +87,8 @@ test("AgentChatStreamSession executes Rust tool calls and sends a second round",
 
     await session.stream({ messages: [{ role: "user", content: "hello" }] }, "turn-1", writer);
 
-    assert.deepEqual(writes.map(({ event }) => event), ["sys_intent_route", "llm_delta", "done"]);
-    assert.equal(writes[1].payload.text, "tool-result-used");
+    assert.deepEqual(writes.map(({ event }) => event), ["sys_intent_route", "sys_model_context", "llm_delta", "done"]);
+    assert.equal(writes[2].payload.text, "tool-result-used");
   } finally {
     server.close();
   }
