@@ -78,9 +78,16 @@ export function buildPlannerRouteContext(
 
 export function preferRetrievalFallback(routeDecision: IntentRouteDecision, hasRagTool: boolean): IntentRouteDecision {
   if (!hasRagTool) return routeDecision;
-  if (routeDecision.categories.size === 1 && routeDecision.categories.has("retrieval")) return routeDecision;
-  if (routeDecision.matchedBy === "fallback" || routeDecision.matchedBy === "strong_rule" || routeDecision.matchedBy === "score") {
-    return new IntentRouteDecision(new Set(["retrieval"]), "fallback", 0.2, routeDecision.fallbackReason || "prefer_retrieval", routeDecision.scores, routeDecision.matchedTools);
+  if (routeDecision.matchedBy === "fallback") {
+    return new IntentRouteDecision(
+      new Set(),
+      routeDecision.matchedBy,
+      routeDecision.confidence,
+      routeDecision.fallbackReason,
+      routeDecision.scores,
+      routeDecision.matchedTools,
+      routeDecision.reason
+    );
   }
   return routeDecision;
 }
