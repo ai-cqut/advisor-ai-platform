@@ -217,6 +217,8 @@ services:
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?INTERNAL_SERVICE_TOKEN is required}
       MEMORY_API_TOKEN: ${MEMORY_API_TOKEN:?MEMORY_API_TOKEN is required}
       AGENT_API_TOKEN: ${AGENT_API_TOKEN:?AGENT_API_TOKEN is required}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-bge-m3}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
     depends_on:
       nacos:

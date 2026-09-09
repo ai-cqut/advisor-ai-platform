@@ -6,7 +6,7 @@ export class RagSearchOpenAiToolDefinition {
       type: "function",
       function: {
         name: "rag_search",
-        description: "检索可用文档清单，用于判断哪些资料可能与问题相关。",
+        description: "按用户问题检索知识库原文片段，用于基于资料内容回答。",
         parameters: {
           type: "object",
           properties: {

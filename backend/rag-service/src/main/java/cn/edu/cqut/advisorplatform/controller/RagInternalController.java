@@ -1,13 +1,19 @@
 package cn.edu.cqut.advisorplatform.controller;
 
+import cn.edu.cqut.advisorplatform.dto.request.RagSearchRequestDTO;
 import cn.edu.cqut.advisorplatform.dto.response.ApiResponseDTO;
 import cn.edu.cqut.advisorplatform.dto.response.RagDocumentResponseDTO;
+import cn.edu.cqut.advisorplatform.dto.response.RagSearchResultDTO;
+import cn.edu.cqut.advisorplatform.service.RagSearchService;
 import cn.edu.cqut.advisorplatform.service.RagService;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -17,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class RagInternalController {
 
   private final RagService ragService;
+  private final RagSearchService ragSearchService;
 
   @GetMapping("/knowledge-bases/{id}/exists")
   public ApiResponseDTO<Map<String, Boolean>> existsKnowledgeBase(@PathVariable("id") Long id) {
@@ -31,5 +38,11 @@ public class RagInternalController {
   @GetMapping("/documents")
   public ApiResponseDTO<List<RagDocumentResponseDTO>> listAllDocuments() {
     return ApiResponseDTO.success(ragService.listAllDocuments());
+  }
+
+  @PostMapping("/search")
+  public ApiResponseDTO<List<RagSearchResultDTO>> search(
+      @Valid @RequestBody RagSearchRequestDTO request) {
+    return ApiResponseDTO.success(ragSearchService.search(request));
   }
 }

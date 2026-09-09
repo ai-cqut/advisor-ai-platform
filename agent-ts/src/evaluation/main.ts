@@ -49,10 +49,10 @@ async function main(): Promise<void> {
       if (!ragClient) return [];
       const documents = await ragClient.searchDocuments(_query, requestedTopK);
       return documents.map((document, index) => ({
-        chunkId: String(document.id),
-        text: document.fileName,
+        chunkId: `${document.documentId}:${document.chunkIndex}`,
+        text: document.content,
         source: "rag",
-        score: Math.max(0, 1 - index * 0.1)
+        score: document.score ?? Math.max(0, 1 - index * 0.1)
       }));
     },
     getAgentAnswer: async (query, _targetKbId) => {

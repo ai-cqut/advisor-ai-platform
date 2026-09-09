@@ -48,6 +48,10 @@ logging:
 advisor:
   internal:
     token: ${INTERNAL_SERVICE_TOKEN:}
+  ollama:
+    base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+  embedding:
+    model: ${EMBEDDING_MODEL:bge-m3}
   rag:
     upload-dir: ${RAG_UPLOAD_DIR:uploads}
   jwt:
