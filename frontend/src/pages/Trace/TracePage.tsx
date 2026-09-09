@@ -23,7 +23,10 @@ export default function TracePage() {
   useEffect(() => () => eventSourceRef.current?.close(), [])
 
   const currentNode = useMemo(
-    () => [...events].reverse().find((event) => event.status === 'STARTED')?.node,
+    () => {
+      const latestEvent = events[events.length - 1]
+      return latestEvent?.status === 'STARTED' ? latestEvent.node : undefined
+    },
     [events],
   )
 

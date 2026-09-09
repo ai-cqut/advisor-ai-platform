@@ -174,7 +174,7 @@ services:
       MEMORY_API_TOKEN: ${MEMORY_API_TOKEN:?MEMORY_API_TOKEN is required}
       AGENT_API_TOKEN: ${AGENT_API_TOKEN:?AGENT_API_TOKEN is required}
       AGENT_BASE_URL: http://agent-ts:8001
-      TRACE_GATEWAY_BASE_URL: http://gateway:8080
+      ADVISOR_TRACE_GATEWAY_BASE_URL: http://gateway:8080
       AI_GATEWAY_ENABLED: "false"
       AI_GATEWAY_BASE_URL: http://ai-gateway:8080
       AI_GATEWAY_API_KEY: ${AI_GATEWAY_MASTER_API_KEY:?AI_GATEWAY_MASTER_API_KEY is required}
