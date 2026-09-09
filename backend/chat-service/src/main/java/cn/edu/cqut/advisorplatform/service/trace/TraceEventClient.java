@@ -9,6 +9,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -90,7 +91,7 @@ public class TraceEventClient {
             record.getTimestamp() == null ? System.currentTimeMillis() : record.getTimestamp(),
             null,
             "agent-ts",
-            record.getPayload()));
+            metadataFor(event, record.getPayload())));
   }
 
   private void send(TraceEvent event) {
@@ -178,6 +179,15 @@ public class TraceEventClient {
     return payload != null
         && (Boolean.FALSE.equals(payload.get("success"))
             || "error".equals(String.valueOf(payload.get("status"))));
+  }
+
+  private Map<String, Object> metadataFor(String event, Map<String, Object> payload) {
+    Map<String, Object> metadata = new HashMap<>();
+    if (payload != null) {
+      metadata.putAll(payload);
+    }
+    metadata.put("event", event);
+    return metadata;
   }
 
   private String valueOrDefault(Map<String, Object> payload, String key, String fallback) {

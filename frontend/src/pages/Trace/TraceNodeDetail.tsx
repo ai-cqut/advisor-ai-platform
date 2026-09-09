@@ -32,7 +32,100 @@ function statusColorFor(passed: unknown, executed: unknown): string {
   return passed === false ? 'red' : 'green'
 }
 
-function StructuredEventDetails({ nodeId, metadata }: { nodeId: string; metadata: Record<string, unknown> }) {
+interface ToolExecution {
+  id: string
+  call?: TraceEvent
+  result?: TraceEvent
+}
+
+function toolExecutions(events: TraceEvent[]): ToolExecution[] {
+  const executions: ToolExecution[] = []
+  const byId = new Map<string, ToolExecution>()
+  const toolEvents = events.filter((item) => item.node === 'tool.execute')
+
+  for (const event of toolEvents) {
+    const metadata = asRecord(event.metadata)
+    const eventType = String(metadata.event ?? '')
+    const payload = metadata
+    const id = String(payload.tool_call_id ?? `${event.timestamp}-${executions.length}`)
+    let execution = byId.get(id)
+    if (!execution) {
+      execution = { id }
+      byId.set(id, execution)
+      executions.push(execution)
+    }
+    if (eventType === 'tool_result' || eventType === 'tool_error') {
+      execution.result = event
+    } else {
+      execution.call = event
+    }
+  }
+  return executions
+}
+
+function toolName(execution: ToolExecution): string {
+  const metadata = asRecord((execution.result ?? execution.call)?.metadata)
+  return textValue(metadata.tool_name, '未知工具')
+}
+
+function toolStatus(execution: ToolExecution): 'STARTED' | 'SUCCESS' | 'FAILED' {
+  if (execution.result?.status === 'FAILED') return 'FAILED'
+  if (execution.result) return 'SUCCESS'
+  return 'STARTED'
+}
+
+function ToolExecutionDetails({ executions }: { executions: ToolExecution[] }) {
+  return (
+    <section className={styles.detailSection}>
+      <div className={styles.toolSummaryHeader}>
+        <Typography.Text strong>工具调用明细</Typography.Text>
+        <Tag color="blue">{executions.length} 次调用</Tag>
+      </div>
+      <List
+        className={styles.toolExecutionList}
+        size="small"
+        dataSource={executions}
+        locale={{ emptyText: '当前链路没有工具调用' }}
+        renderItem={(execution, index) => {
+          const event = execution.result ?? execution.call
+          const metadata = asRecord(event?.metadata)
+          const status = toolStatus(execution)
+          return (
+            <List.Item>
+              <div className={styles.toolExecutionItem}>
+                <div className={styles.toolExecutionHeader}>
+                  <strong>{index + 1}. {toolName(execution)}</strong>
+                  <Tag color={status === 'FAILED' ? 'red' : status === 'SUCCESS' ? 'green' : 'blue'}>
+                    {statusLabel(status)}
+                  </Tag>
+                </div>
+                <div className={styles.toolExecutionMeta}>
+                  调用 ID：{textValue(metadata.tool_call_id, execution.id)}
+                </div>
+                <div className={styles.toolExecutionMeta}>
+                  输入参数：{textValue(metadata.tool_args)}
+                </div>
+                {metadata.tool_output !== undefined && (
+                  <pre className={styles.toolOutput}>{textValue(metadata.tool_output)}</pre>
+                )}
+              </div>
+            </List.Item>
+          )
+        }}
+      />
+    </section>
+  )
+}
+
+function StructuredEventDetails({
+  nodeId,
+  metadata,
+  events,
+}: {
+  nodeId: string
+  metadata: Record<string, unknown>
+  events: TraceEvent[]
+}) {
   if (nodeId === 'gateway.risk.input') {
     const checks = Array.isArray(metadata.checks) ? metadata.checks.map(asRecord) : []
     return (
@@ -120,21 +213,7 @@ function StructuredEventDetails({ nodeId, metadata }: { nodeId: string; metadata
   }
 
   if (nodeId === 'tool.execute') {
-    return (
-      <section className={styles.detailSection}>
-        <Typography.Text strong>工具执行摘要</Typography.Text>
-        <Descriptions className={styles.detailDescription} column={1} size="small">
-          <Descriptions.Item label="工具名称">{textValue(metadata.tool_name)}</Descriptions.Item>
-          <Descriptions.Item label="调用 ID">{textValue(metadata.tool_call_id)}</Descriptions.Item>
-          <Descriptions.Item label="执行状态">
-            <Tag color={metadata.success === false ? 'red' : 'green'}>
-              {metadata.success === false ? '失败' : '成功或已返回'}
-            </Tag>
-          </Descriptions.Item>
-          <Descriptions.Item label="尝试次数">{textValue(metadata.attempt)}</Descriptions.Item>
-        </Descriptions>
-      </section>
-    )
+    return <ToolExecutionDetails executions={toolExecutions(events)} />
   }
 
   if (nodeId === 'agent.reasoning') {
@@ -201,7 +280,7 @@ export function TraceNodeDetail({ definition, event, events }: TraceNodeDetailPr
         <Typography.Text strong>执行说明</Typography.Text>
         <div className={styles.detailMessage}>{event?.message ?? '请求尚未经过此节点。'}</div>
       </section>
-      {event && <StructuredEventDetails nodeId={definition.id} metadata={metadata} />}
+      {event && <StructuredEventDetails nodeId={definition.id} metadata={metadata} events={events} />}
       <Collapse
         items={[
           {

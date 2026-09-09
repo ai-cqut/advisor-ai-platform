@@ -541,6 +541,55 @@
   margin: 20px 0;
 }
 
+.toolSummaryHeader,
+.toolExecutionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.toolExecutionList {
+  margin-top: 10px;
+}
+
+.toolExecutionItem {
+  width: 100%;
+  min-width: 0;
+}
+
+.toolExecutionHeader strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #172033;
+}
+
+.toolExecutionHeader :global(.ant-tag) {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.toolExecutionMeta {
+  margin-top: 6px;
+  color: #758398;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.toolOutput {
+  max-height: 180px;
+  margin: 8px 0 0;
+  overflow: auto;
+  padding: 9px;
+  background: #f5f7fa;
+  color: #526173;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .detailDescription {
   margin-top: 10px;
 }

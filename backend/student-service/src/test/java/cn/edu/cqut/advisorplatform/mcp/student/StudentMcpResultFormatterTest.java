@@ -16,6 +16,7 @@ class StudentMcpResultFormatterTest {
   @Test
   void formatsStudentList() {
     StudentDetailResponse student = new StudentDetailResponse();
+    student.setId(7L);
     student.setStudentNo("2024001");
     student.setName("张三");
     student.setGrade("2024");
@@ -26,7 +27,7 @@ class StudentMcpResultFormatterTest {
     String text = formatter.formatStudentList(1, List.of(student));
 
     assertTrue(text.contains("共 1 条记录"));
-    assertTrue(text.contains("学号: 2024001 | 姓名: 张三"));
+    assertTrue(text.contains("ID: 7 | 学号: 2024001 | 姓名: 张三"));
     assertTrue(text.contains("风险等级: 低"));
   }
 

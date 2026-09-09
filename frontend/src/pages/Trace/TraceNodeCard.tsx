@@ -7,12 +7,16 @@ import styles from './TracePage.module.css'
 interface TraceNodeCardProps {
   definition: TraceNodeDefinition
   event?: TraceEvent
+  events?: TraceEvent[]
   selected?: boolean
   onClick?: () => void
 }
 
-export function TraceNodeCard({ definition, event, selected, onClick }: TraceNodeCardProps) {
+export function TraceNodeCard({ definition, event, events = [], selected, onClick }: TraceNodeCardProps) {
   const status = event?.status ?? 'WAITING'
+  const toolCallCount = definition.id === 'tool.execute'
+    ? events.filter((item) => item.node === definition.id && ['tool_call', 'tool_use'].includes(String(item.metadata?.event ?? ''))).length
+    : 0
   const icon = {
     STARTED: <LoadingOutlined spin />,
     SUCCESS: <CheckCircleOutlined />,
@@ -35,6 +39,7 @@ export function TraceNodeCard({ definition, event, selected, onClick }: TraceNod
           {statusLabel(status)}
         </Tag>
         <span>{formatDuration(event?.durationMs)}</span>
+        {toolCallCount > 0 && <span>{toolCallCount} 次调用</span>}
       </div>
     </button>
   )

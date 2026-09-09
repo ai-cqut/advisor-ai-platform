@@ -327,6 +327,7 @@ export default function TracePage() {
                   <TraceNodeCard
                     definition={definition}
                     event={latestEventForNode(events, definition.id)}
+                    events={events}
                     selected={selectedNodeId === definition.id}
                     onClick={() => selectNode(definition.id)}
                   />

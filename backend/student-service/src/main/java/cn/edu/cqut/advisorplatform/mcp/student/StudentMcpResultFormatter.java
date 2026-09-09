@@ -11,7 +11,9 @@ class StudentMcpResultFormatter {
     StringBuilder sb = new StringBuilder();
     sb.append("共 ").append(totalElements).append(" 条记录\n\n");
     for (StudentDetailResponse student : students) {
-      sb.append("学号: ")
+      sb.append("ID: ")
+          .append(student.getId())
+          .append(" | 学号: ")
           .append(student.getStudentNo())
           .append(" | 姓名: ")
           .append(student.getName())
