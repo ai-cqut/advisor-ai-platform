@@ -135,7 +135,16 @@
 }
 
 .flow {
-  padding: 4px 10px;
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  padding: 4px 10px 12px;
+}
+
+.flow > div {
+  display: flex;
+  min-width: 260px;
+  align-items: center;
 }
 
 .node {
@@ -209,6 +218,7 @@
 }
 
 .nodeSubtitle,
+.nodeService,
 .nodeMessage,
 .nodeMeta {
   color: #758398;
@@ -219,8 +229,15 @@
   margin-top: 2px;
 }
 
+.nodeService {
+  margin-top: 5px;
+  color: #526173;
+  font-size: 11px;
+  font-weight: 600;
+}
+
 .nodeMessage {
-  margin-top: 7px;
+  margin-top: 5px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -239,9 +256,10 @@
 }
 
 .connector {
-  width: 2px;
-  height: 18px;
-  margin: 0 auto;
+  width: 26px;
+  height: 2px;
+  flex: 0 0 26px;
+  margin: auto 0;
   background: #c7d2df;
 }
 
@@ -554,5 +572,22 @@
 
   .topologyEdges {
     grid-column: auto;
+  }
+
+  .flow {
+    flex-direction: column;
+    overflow-x: visible;
+  }
+
+  .flow > div {
+    min-width: 0;
+    flex-direction: column;
+  }
+
+  .connector {
+    width: 2px;
+    height: 18px;
+    flex-basis: 18px;
+    margin: 0 auto;
   }
 }

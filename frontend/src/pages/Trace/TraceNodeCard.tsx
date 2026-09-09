@@ -26,6 +26,7 @@ export function TraceNodeCard({ definition, event, selected, onClick }: TraceNod
       <div className={styles.nodeIcon}>{icon}</div>
       <div className={styles.nodeBody}>
         <div className={styles.nodeTitle}>{definition.title}</div>
+        <div className={styles.nodeService}>{definition.service} · {definition.group}</div>
         <div className={styles.nodeSubtitle}>{definition.subtitle}</div>
         <div className={styles.nodeMessage}>{event?.message ?? '等待真实请求经过此节点'}</div>
       </div>
