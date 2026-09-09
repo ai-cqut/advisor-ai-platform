@@ -27,7 +27,7 @@ class ChatTurnPersistenceSupport {
         sessionId, userId, turnId, userText, assistantText, sources, events);
   }
 
-  void saveTurnQuietly(
+  boolean saveTurnQuietly(
       ChatMessageService chatMessageService,
       Long sessionId,
       Long userId,
@@ -39,8 +39,10 @@ class ChatTurnPersistenceSupport {
     try {
       saveTurn(
           chatMessageService, sessionId, userId, turnId, userText, assistantText, sources, events);
+      return true;
     } catch (Exception e) {
       log.warn("chat_stream save_turn_failed, reason={}", LogTraceUtil.preview(e.getMessage()));
+      return false;
     }
   }
 }

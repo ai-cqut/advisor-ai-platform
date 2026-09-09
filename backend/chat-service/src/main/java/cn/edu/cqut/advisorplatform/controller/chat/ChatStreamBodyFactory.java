@@ -92,31 +92,48 @@ class ChatStreamBodyFactory {
         assistantText = FAILURE_MESSAGE_PREFIX + errorMessage;
       } finally {
         sseResponseWriter.writeDoneEvent(outputStream, finishReason, turnId, traceId);
-        turnPersistenceSupport.saveTurnQuietly(
-            chatMessageService,
-            request.getSessionId(),
-            userId,
-            turnId,
-            userText,
-            assistantText,
-            sources,
-            events);
         traceEventClient.publish(
             traceId,
             turnId,
             "chat.persist",
-            TraceNodeStatus.SUCCESS,
-            "会话消息已持久化",
+            TraceNodeStatus.STARTED,
+            "开始持久化会话消息和 Agent 事件",
+            null,
+            java.util.Map.of(
+                "stage",
+                "save_messages_and_events",
+                "includes",
+                List.of("userMessage", "assistantMessage", "sources", "agentEvents"),
+                "titleHandling",
+                "首次会话同步生成标题，失败时使用备用标题"));
+        boolean persisted =
+            turnPersistenceSupport.saveTurnQuietly(
+                chatMessageService,
+                request.getSessionId(),
+                userId,
+                turnId,
+                userText,
+                assistantText,
+                sources,
+                events);
+        traceEventClient.publish(
+            traceId,
+            turnId,
+            "chat.persist",
+            persisted ? TraceNodeStatus.SUCCESS : TraceNodeStatus.FAILED,
+            persisted ? "会话消息和 Agent 事件已持久化" : "会话消息持久化失败",
             support.elapsedSince(requestStartedAt),
-            java.util.Map.of("eventCount", events.size()));
+            java.util.Map.of("eventCount", events.size(), "persisted", persisted));
         traceEventClient.publish(
             traceId,
             turnId,
             "request.completed",
-            finishReason.equals("error") ? TraceNodeStatus.FAILED : TraceNodeStatus.SUCCESS,
-            finishReason.equals("error") ? "请求处理失败" : "请求处理完成",
+            finishReason.equals("error") || !persisted
+                ? TraceNodeStatus.FAILED
+                : TraceNodeStatus.SUCCESS,
+            finishReason.equals("error") || !persisted ? "请求处理失败" : "请求处理完成",
             support.elapsedSince(requestStartedAt),
-            java.util.Map.of("finishReason", finishReason));
+            java.util.Map.of("finishReason", finishReason, "persisted", persisted));
         log.info(
             "chat_stream done, assistantLen={}, elapsedMs={}",
             assistantText.length(),
