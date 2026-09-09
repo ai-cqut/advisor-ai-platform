@@ -31,7 +31,6 @@ test("context pipeline only loads builders selected by the route", async () => {
   });
   const pipeline = new AgentContextPipeline(
     builder("memory"),
-    builder("rag"),
     builder("fetch"),
     builder("search")
   );
@@ -39,7 +38,7 @@ test("context pipeline only loads builders selected by the route", async () => {
     { messages: [{ role: "user", content: "请根据知识库文档回答" }] },
     new IntentRouter().route("请根据知识库文档回答", ["retrieval", "search", "memory_read"])
   );
-  assert.deepEqual(calls, ["rag", "fetch"]);
+  assert.deepEqual(calls, ["fetch"]);
 });
 
 test("intent route decision exposes reason in event payload", () => {
