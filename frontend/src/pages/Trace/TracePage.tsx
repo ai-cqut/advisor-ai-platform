@@ -19,8 +19,18 @@ export default function TracePage() {
   const [answer, setAnswer] = useState('')
   const [running, setRunning] = useState(false)
   const eventSourceRef = useRef<EventSource | null>(null)
+  const stopTimerRef = useRef<number | null>(null)
+  const traceCompletedRef = useRef(false)
 
-  useEffect(() => () => eventSourceRef.current?.close(), [])
+  useEffect(
+    () => () => {
+      eventSourceRef.current?.close()
+      if (stopTimerRef.current !== null) {
+        window.clearTimeout(stopTimerRef.current)
+      }
+    },
+    [],
+  )
 
   const currentNode = useMemo(
     () => {
@@ -33,7 +43,18 @@ export default function TracePage() {
   const stop = () => {
     eventSourceRef.current?.close()
     eventSourceRef.current = null
+    if (stopTimerRef.current !== null) {
+      window.clearTimeout(stopTimerRef.current)
+      stopTimerRef.current = null
+    }
     setRunning(false)
+  }
+
+  const scheduleStop = (delayMs: number) => {
+    if (stopTimerRef.current !== null) {
+      window.clearTimeout(stopTimerRef.current)
+    }
+    stopTimerRef.current = window.setTimeout(stop, delayMs)
   }
 
   const runTrace = async () => {
@@ -43,11 +64,16 @@ export default function TracePage() {
     setEvents([])
     const nextTraceId = crypto.randomUUID()
     setTraceId(nextTraceId)
+    traceCompletedRef.current = false
 
     eventSourceRef.current = subscribeTrace(
       nextTraceId,
       (event) => setEvents((previous) => [...previous, event]),
       () => message.error('链路事件订阅失败'),
+      () => {
+        traceCompletedRef.current = true
+        scheduleStop(300)
+      },
     )
 
     try {
@@ -67,7 +93,9 @@ export default function TracePage() {
     } catch (error) {
       message.error(error instanceof Error ? error.message : '链路请求失败')
     } finally {
-      window.setTimeout(stop, 800)
+      if (!traceCompletedRef.current) {
+        scheduleStop(10_000)
+      }
     }
   }
 

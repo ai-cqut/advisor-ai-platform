@@ -5,6 +5,7 @@ export function subscribeTrace(
   traceId: string,
   onEvent: (event: TraceEvent) => void,
   onError: () => void,
+  onCompleted?: () => void,
 ): EventSource {
   const source = new EventSource(`/api/trace/stream?traceId=${encodeURIComponent(traceId)}`)
   let opened = false
@@ -13,7 +14,11 @@ export function subscribeTrace(
   }
   source.addEventListener('trace.node', (message) => {
     try {
-      onEvent(JSON.parse((message as MessageEvent).data) as TraceEvent)
+      const event = JSON.parse((message as MessageEvent).data) as TraceEvent
+      onEvent(event)
+      if (event.node === 'request.completed') {
+        onCompleted?.()
+      }
     } catch {
       onError()
     }

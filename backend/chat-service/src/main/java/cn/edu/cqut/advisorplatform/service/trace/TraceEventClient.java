@@ -10,6 +10,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -22,6 +25,8 @@ public class TraceEventClient {
   private final ObjectMapper objectMapper;
   private final String gatewayBaseUrl;
   private final String internalToken;
+  private final ConcurrentMap<String, CompletableFuture<Void>> publishChains =
+      new ConcurrentHashMap<>();
 
   public TraceEventClient(
       ObjectMapper objectMapper,
@@ -90,6 +95,21 @@ public class TraceEventClient {
   }
 
   private void send(TraceEvent event) {
+    String traceId = event.getTraceId();
+    publishChains.compute(
+        traceId,
+        (ignored, previous) -> {
+          CompletableFuture<Void> before =
+              previous == null
+                  ? CompletableFuture.completedFuture(null)
+                  : previous.handle((result, error) -> null);
+          CompletableFuture<Void> next = before.thenCompose(ignoredResult -> sendNow(event));
+          next.whenComplete((result, error) -> publishChains.remove(traceId, next));
+          return next;
+        });
+  }
+
+  private CompletableFuture<Void> sendNow(TraceEvent event) {
     try {
       String body = objectMapper.writeValueAsString(event);
       HttpRequest request =
@@ -100,8 +120,17 @@ public class TraceEventClient {
               .header("X-Internal-Token", internalToken)
               .POST(HttpRequest.BodyPublishers.ofString(body))
               .build();
-      httpClient
+      return httpClient
           .sendAsync(request, HttpResponse.BodyHandlers.discarding())
+          .thenAccept(
+              response -> {
+                if (response.statusCode() >= 400) {
+                  log.debug(
+                      "trace event publish failed: status={}, node={}",
+                      response.statusCode(),
+                      event.getNode());
+                }
+              })
           .exceptionally(
               error -> {
                 log.debug("trace event publish failed: {}", error.getMessage());
@@ -109,6 +138,7 @@ public class TraceEventClient {
               });
     } catch (Exception e) {
       log.debug("trace event serialization failed: {}", e.getMessage());
+      return CompletableFuture.completedFuture(null);
     }
   }
 
