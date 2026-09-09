@@ -22,7 +22,7 @@ class ChatSessionMutationSupport {
     ChatSessionDO session = new ChatSessionDO();
     session.setUser(
         chatSessionSupport.toUserReference(chatSessionSupport.requireUser(currentUser)));
-    session.setTitle("???");
+    session.setTitle(ChatSessionSupport.DEFAULT_SESSION_TITLE);
     LocalDateTime now = LocalDateTime.now();
     session.setCreatedAt(now);
     session.setUpdatedAt(now);

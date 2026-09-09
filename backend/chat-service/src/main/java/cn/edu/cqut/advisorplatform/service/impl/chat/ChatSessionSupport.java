@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ChatSessionSupport {
 
-  private static final String DEFAULT_SESSION_TITLE = "???";
+  public static final String DEFAULT_SESSION_TITLE = "\u65b0\u5bf9\u8bdd";
   private static final DateTimeFormatter TIME_FORMATTER =
       DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -26,6 +26,9 @@ public class ChatSessionSupport {
         session.getTitle() == null || session.getTitle().isBlank()
             ? DEFAULT_SESSION_TITLE
             : session.getTitle();
+    if ("???".equals(title)) {
+      title = DEFAULT_SESSION_TITLE;
+    }
     return Map.of("id", session.getId(), "title", title, "updatedAt", formatTime(time));
   }
 

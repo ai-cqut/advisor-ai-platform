@@ -6,6 +6,7 @@ import cn.edu.cqut.advisorplatform.entity.chat.ChatMessageDO;
 import cn.edu.cqut.advisorplatform.entity.chat.ChatSessionDO;
 import cn.edu.cqut.advisorplatform.entity.chat.SourceReference;
 import cn.edu.cqut.advisorplatform.entity.chat.StreamEventRecord;
+import cn.edu.cqut.advisorplatform.service.impl.agent.AgentTitleSummaryClient;
 import cn.edu.cqut.advisorplatform.utils.LogTraceUtil;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,6 +25,7 @@ class ChatMessageTurnPersistenceSupport {
 
   private final ChatMessageDao chatMessageDao;
   private final ChatSessionDao chatSessionDao;
+  private final AgentTitleSummaryClient titleSummaryClient;
   private final ChatMessagePersistFactory messageFactory = new ChatMessagePersistFactory();
 
   void saveTurn(
@@ -114,7 +116,10 @@ class ChatMessageTurnPersistenceSupport {
   }
 
   private void updateSessionTitle(ChatSessionDO session, String safeUserContent) {
-    String title = messageFactory.buildTitle(safeUserContent);
+    String title =
+        titleSummaryClient
+            .summarize(safeUserContent)
+            .orElseGet(() -> messageFactory.buildFallbackTitle(safeUserContent));
     session.setTitle(title);
     log.info("chat_persist update_title, titlePreview={}", LogTraceUtil.preview(title));
   }

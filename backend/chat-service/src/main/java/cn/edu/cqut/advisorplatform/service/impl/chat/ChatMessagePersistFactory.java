@@ -10,7 +10,8 @@ import org.springframework.lang.Nullable;
 
 class ChatMessagePersistFactory {
 
-  private static final String DEFAULT_TITLE = "新对话";
+  private static final String DEFAULT_TITLE = "\u65b0\u5bf9\u8bdd";
+  private static final String LEGACY_DEFAULT_TITLE = "???";
 
   ChatMessageDO createMessage(
       ChatSessionDO session,
@@ -36,11 +37,13 @@ class ChatMessagePersistFactory {
       return true;
     }
     String normalized = title.trim();
-    return normalized.isEmpty() || DEFAULT_TITLE.equals(normalized);
+    return normalized.isEmpty()
+        || DEFAULT_TITLE.equals(normalized)
+        || LEGACY_DEFAULT_TITLE.equals(normalized);
   }
 
-  String buildTitle(String userContent) {
-    int limit = Math.min(5, userContent.length());
+  String buildFallbackTitle(String userContent) {
+    int limit = Math.min(3, userContent.length());
     return userContent.substring(0, limit);
   }
 }

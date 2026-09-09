@@ -22,10 +22,15 @@ export function toDisplaySources(items: StreamSourceItem[], message?: string): S
 export function toChatSession(data: ChatSessionDTO): ChatSession {
   return {
     id: data.id,
-    title: data.title,
+    title: normalizeSessionTitle(data.title),
     updatedAt: data.updatedAt,
     messages: [],
   }
+}
+
+export function normalizeSessionTitle(title: string | null | undefined): string {
+  const normalized = title?.trim() ?? ''
+  return !normalized || normalized === '???' ? '新对话' : normalized
 }
 
 export function isSessionNotFoundError(error: unknown): boolean {

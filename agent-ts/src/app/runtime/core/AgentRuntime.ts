@@ -84,6 +84,35 @@ export class AgentRuntime {
     };
   }
 
+  async summarizeTitle(question: string): Promise<string> {
+    const response = await this.openAiClient.chatWithStructuredOutput(
+      [
+        {
+          role: "system",
+          content:
+            "你是对话标题总结子代理。只根据用户问题生成简短中文标题。" +
+            "不要回答问题，不要调用工具，不要检索知识库，不要联网。" +
+            "标题最多 12 个汉字，只返回 JSON。"
+        },
+        { role: "user", content: question.trim() }
+      ],
+      {
+        name: "chat_title",
+        strict: true,
+        schema: {
+          type: "object",
+          additionalProperties: false,
+          properties: { title: { type: "string" } },
+          required: ["title"]
+        }
+      }
+    );
+    const parsed = JSON.parse(response) as { title?: unknown };
+    const title = typeof parsed.title === "string" ? parsed.title.trim() : "";
+    if (!title) throw new Error("title generation returned an empty title");
+    return title.slice(0, 12);
+  }
+
   async streamChat(body: unknown, request: IncomingMessage, response: ServerResponse): Promise<void> {
     const chatRequest = validateChatStreamRequest(body);
     const traceId = this.requestIdResolver.resolveTraceId(chatRequest, request);

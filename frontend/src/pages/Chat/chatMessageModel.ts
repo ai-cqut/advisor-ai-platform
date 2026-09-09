@@ -6,7 +6,12 @@ import type { ChatMessage } from './chatTypes'
 import { normalizeEventRecords } from './chatEventRecordModel'
 import { toolCallsFromEvents } from './chatToolCallModel'
 export type { ChatEvent, ChatMessage, ChatSession, PlanStep, Source, ToolCall } from './chatTypes'
-export { isSessionNotFoundError, toChatSession, toDisplaySources } from './chatApiModel'
+export {
+  isSessionNotFoundError,
+  normalizeSessionTitle,
+  toChatSession,
+  toDisplaySources,
+} from './chatApiModel'
 export {
   describeSystemState,
   eventDisplayDetail,

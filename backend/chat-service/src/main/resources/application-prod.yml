@@ -47,6 +47,7 @@ advisor:
     base-url: ${AGENT_BASE_URL:http://127.0.0.1:8001}
     api-token: ${AGENT_API_TOKEN:${INTERNAL_SERVICE_TOKEN:}}
     timeout-ms: 600000
+    title-timeout-ms: ${AGENT_TITLE_TIMEOUT_MS:10000}
     debug-stream: false
   ai-gateway:
     enabled: ${AI_GATEWAY_ENABLED:false}

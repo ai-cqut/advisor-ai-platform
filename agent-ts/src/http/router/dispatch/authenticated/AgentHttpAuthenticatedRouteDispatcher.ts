@@ -5,6 +5,7 @@ import type { AgentJsonResponseWriter } from "../../../response/core/json/AgentJ
 import type { AgentChatStreamRouteHandler } from "../../../routes/chat/AgentChatStreamRouteHandler.js";
 import type { AgentMcpRouteHandler } from "../../../routes/mcp/core/AgentMcpRouteHandler.js";
 import type { AgentModelRouteHandler } from "../../../routes/models/AgentModelRouteHandler.js";
+import type { AgentTitleRouteHandler } from "../../../routes/chat/AgentTitleRouteHandler.js";
 
 export class AgentHttpAuthenticatedRouteDispatcher {
   constructor(
@@ -13,13 +14,18 @@ export class AgentHttpAuthenticatedRouteDispatcher {
     private readonly modelRouteHandler: AgentModelRouteHandler,
     private readonly mcpRouteHandler: AgentMcpRouteHandler,
     private readonly routeResultWriter: AgentHttpRouteResultWriter,
-    private readonly workspaceRouteHandler: AgentWorkspaceRouteHandler
+    private readonly workspaceRouteHandler: AgentWorkspaceRouteHandler,
+    private readonly titleRouteHandler: AgentTitleRouteHandler
   ) {}
 
   async dispatch(url: URL, request: IncomingMessage, response: ServerResponse): Promise<void> {
     const modelResult = await this.modelRouteHandler.handle(request.method, url);
     if (this.routeResultWriter.writeIfPresent(response, modelResult)) return;
     if (await this.chatStreamRouteHandler.handle(request.method, url, request, response)) {
+      return;
+    }
+    const titleResult = await this.titleRouteHandler.handle(request.method, url, request, response);
+    if (this.routeResultWriter.writeIfPresent(response, titleResult)) {
       return;
     }
 

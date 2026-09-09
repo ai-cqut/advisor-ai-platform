@@ -45,7 +45,7 @@ export function appendOptimisticMessages(
   assistantPlaceholder: ChatMessage,
 ): ChatSession[] {
   let matched = false
-  const titleText = userMessage.content.slice(0, 5)
+  const titleText = userMessage.content.slice(0, 3)
   const mapped = sessions.map((session) => {
     if (session.id !== targetSession.id) {
       return session

@@ -13,6 +13,7 @@ import cn.edu.cqut.advisorplatform.dao.chat.ChatSessionDao;
 import cn.edu.cqut.advisorplatform.entity.chat.ChatMessageDO;
 import cn.edu.cqut.advisorplatform.entity.chat.ChatSessionDO;
 import cn.edu.cqut.advisorplatform.entity.user.UserDO;
+import cn.edu.cqut.advisorplatform.service.impl.agent.AgentTitleSummaryClient;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +29,8 @@ class ChatMessageServiceImplTest {
   @Mock private ChatMessageDao chatMessageDao;
 
   @Mock private ChatSessionDao chatSessionDao;
+
+  @Mock private AgentTitleSummaryClient titleSummaryClient;
 
   private ChatSessionOwnershipSupport sessionOwnershipSupport;
 
@@ -50,7 +53,8 @@ class ChatMessageServiceImplTest {
         new ChatMessageServiceImpl(
             chatMessageDao,
             sessionOwnershipSupport,
-            new ChatMessageTurnPersistenceSupport(chatMessageDao, chatSessionDao));
+            new ChatMessageTurnPersistenceSupport(
+                chatMessageDao, chatSessionDao, titleSummaryClient));
   }
 
   @Test
@@ -66,8 +70,25 @@ class ChatMessageServiceImplTest {
 
     ArgumentCaptor<ChatSessionDO> sessionCaptor = ArgumentCaptor.forClass(ChatSessionDO.class);
     verify(chatSessionDao).save(sessionCaptor.capture());
-    assertThat(sessionCaptor.getValue().getTitle()).isEqualTo("abcde");
+    assertThat(sessionCaptor.getValue().getTitle()).isEqualTo("abc");
     verify(chatMessageDao, times(2)).save(any(ChatMessageDO.class));
+  }
+
+  @Test
+  void saveTurn_shouldFallbackToFirstThreeCharactersWhenTitleAgentFails() {
+    when(chatSessionDao.findById(1001L)).thenReturn(Optional.of(session));
+    when(chatMessageDao.existsBySessionIdAndTurnIdAndRole(1001L, "turn-fallback", "assistant"))
+        .thenReturn(false);
+    when(chatMessageDao.existsBySessionIdAndRole(1001L, "user")).thenReturn(false);
+    when(chatMessageDao.existsBySessionIdAndTurnIdAndRole(1001L, "turn-fallback", "user"))
+        .thenReturn(false);
+    when(titleSummaryClient.summarize("abcdefghi")).thenReturn(Optional.empty());
+
+    chatMessageService.saveTurn(1001L, 1L, "turn-fallback", "abcdefghi", "ok");
+
+    ArgumentCaptor<ChatSessionDO> sessionCaptor = ArgumentCaptor.forClass(ChatSessionDO.class);
+    verify(chatSessionDao).save(sessionCaptor.capture());
+    assertThat(sessionCaptor.getValue().getTitle()).isEqualTo("abc");
   }
 
   @Test
